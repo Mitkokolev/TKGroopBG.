@@ -1,27 +1,32 @@
 ﻿@{
-    ViewData["Title"] = "TK Group BG - Начало";
+    ViewData["Title"] = "Начало";
+    Layout = "~/Views/Shared/_Layout.cshtml";
 }
 
-<div class="logo-section">
-    <div class="logo-icon">
-        <div class="tk-symbol">
-            <span class="t">T</span><span class="k">K</span>
-            <div class="arc"></div>
+<section class="home-hero fade-up" role="region" aria-label="Начална секция">
+    <div class="hero-wrap">
+        <div class="hero-logo">
+            <div class="logo-icon">
+                <div class="tk-symbol" aria-hidden="true">
+                    <span class="t">T</span><span class="k">K</span>
+                    <div class="arc"></div>
+                </div>
+            </div>
+            <h1 class="logo-text">TKGroopBG</h1>
+            <h3 class="logo-subtext">INDUSTRIAL SOLUTIONS</h3>
+        </div>
+
+        <div class="home-grid">
+            <a asp-controller="Products" asp-action="Index" class="menu-card fade-up" style="animation-delay:.05s">
+                <img src="~/images/products.jpg" class="card-img" alt="Продукти">
+                <div class="card-overlay">Продукти</div>
+            </a>
+
+            <a asp-controller="Galleries" asp-action="Index" class="menu-card fade-up" style="animation-delay:.1s">
+                <img src="~/images/gallery.jpg" class="card-img" alt="Галерия">
+                <div class="card-overlay">Галерия</div>
+            </a>
         </div>
     </div>
-    <div class="logo-text">TK GROUP BG</div>
-    <div class="logo-subtext">INDUSTRIAL SOLUTIONS</div>
-</div>
-
-<div class="home-grid">
-    <a asp-controller="Products" asp-action="Index" class="menu-card">
-        <img src="~/images/products.jpg" alt="Продукти" class="card-img">
-        <div class="card-overlay">Продукти</div>
-    </a>
-    <a asp-controller="Galleries" asp-action="Index" class="menu-card">
-        <img src="~/images/gallery.jpg" alt="Галерия" class="card-img">
-        <div class="card-overlay">Галерия</div>
-    </a>
-  
-</div>
+</section>
 
