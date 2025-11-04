@@ -1,5 +1,4 @@
 ﻿@model IEnumerable<TKGroopBG.Models.Products>
-
 @{
     ViewData["Title"] = "Продукти";
     Layout = "~/Views/Shared/_Layout.cshtml";
@@ -7,11 +6,16 @@
 
 <div class="container mt-5 text-center">
     <h2 class="text-danger fw-bold mb-2">Нашите продукти</h2>
-    <p class="text-muted mb-5">Добре дошли в секцията с продукти.</p>
+    <p class="text-muted mb-4">Добре дошли в секцията с продукти.</p>
 
-    <p>
-        <a asp-action="Create" class="btn btn-outline-danger mb-4">+ Добави нов продукт</a>
-    </p>
+    @await Html.PartialAsync("_AdminBar")
+
+    @if (User.IsInRole("Admin"))
+    {
+        <p>
+            <a asp-action="Create" class="btn btn-outline-danger mb-4">+ Добави нов продукт</a>
+        </p>
+    }
 
     <div class="products-grid">
         @foreach (var item in Model)
@@ -24,13 +28,10 @@
                      alt="@item.Name"
                      class="product-img"
                      onerror="this.src='@Url.Content("~/images/default.jpg")'" />
-
                 <div class="product-info">
                     <h3>@item.Name</h3>
                     <p>@item.Description</p>
-                    <span class="product-price">
-                        @item.Price.ToString("0.00") лв.
-                    </span>
+                    <span class="product-price">@item.Price.ToString("0.00") лв.</span>
                     @if (!string.IsNullOrWhiteSpace(item.Category))
                     {
                         <p class="text-muted small">@item.Category</p>
@@ -38,8 +39,12 @@
 
                     <div class="product-actions mt-2">
                         <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-outline-dark">Детайли</a>
-                        <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-outline-secondary">Редактирай</a>
-                        <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-sm btn-outline-danger">Изтрий</a>
+
+                        @if (User.IsInRole("Admin"))
+                        {
+                            <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-outline-secondary">Редактирай</a>
+                            <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-sm btn-outline-danger">Изтрий</a>
+                        }
                     </div>
                 </div>
             </div>

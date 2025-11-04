@@ -1,30 +1,35 @@
 ﻿@model IEnumerable<TKGroopBG.Models.Gallery>
-
 @{
     ViewData["Title"] = "Галерия";
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
-
 <div class="container mt-5 text-center">
-    <h2 class="text-danger fw-bold mb-4">Галерия</h2>
+    <h2 class="text-danger fw-bold mb-2">Галерия</h2>
     <p class="text-muted mb-4">Реализирани обекти и примери от нашата работа.</p>
 
-    <p>
-        <a asp-action="Create" class="btn btn-outline-danger mb-4">+ Добави снимка</a>
-    </p>
+    @await Html.PartialAsync("_AdminBar")
+
+    @if (User.IsInRole("Admin"))
+    {
+        <p>
+            <a asp-action="Create" class="btn btn-outline-danger mb-4">+ Добави снимка</a>
+        </p>
+    }
 
     <div class="products-grid" style="grid-template-columns: repeat(4, 1fr);">
         @foreach (var item in Model)
         {
-            var imageName = ((item.Title ?? string.Empty).Replace(" ", "_")) + ".jpg";
-            var imagePath = Url.Content($"~/gallery/{imageName}");
+            // ако имаш FileName в модела — предпочети него:
+            var fileName = string.IsNullOrWhiteSpace(item.FileName)
+            ? ((item.Title ?? string.Empty).Replace(" ", "_")) + ".jpg"
+            : item.FileName;
+            var imagePath = Url.Content($"~/gallery/{fileName}");
 
             <div class="product-card">
                 <img src="@imagePath"
                      alt="@item.Title"
                      class="product-img"
                      onerror="this.src='@Url.Content("~/images/default.jpg")'" />
-
                 <div class="product-info">
                     <h3>@item.Title</h3>
                     @if (!string.IsNullOrWhiteSpace(item.Description))
@@ -34,8 +39,12 @@
 
                     <div class="product-actions mt-2">
                         <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-outline-dark">Детайли</a>
-                        <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-outline-secondary">Редактирай</a>
-                        <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-sm btn-outline-danger">Изтрий</a>
+
+                        @if (User.IsInRole("Admin"))
+                        {
+                            <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-outline-secondary">Редактирай</a>
+                            <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-sm btn-outline-danger">Изтрий</a>
+                        }
                     </div>
                 </div>
             </div>

@@ -1,9 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using TKGroopBG.Data;
 using TKGroopBG.Models;
@@ -19,139 +16,113 @@ namespace TKGroopBG.Controllers
             _context = context;
         }
 
-        // GET: Products
+        // GET: Products (публично)
+        [AllowAnonymous]
         public async Task<IActionResult> Index()
         {
-            return View(await _context.Products.ToListAsync());
+            var items = await _context.Products.AsNoTracking().ToListAsync();
+            return View(items);
         }
 
-        // GET: Products/Details/5
+        // GET: Products/Details/5 (публично)
+        [AllowAnonymous]
         public async Task<IActionResult> Details(int? id)
         {
-            if (id == null)
-            {
-                return NotFound();
-            }
+            if (id == null) return NotFound();
 
-            var products = await _context.Products
+            var product = await _context.Products
+                .AsNoTracking()
                 .FirstOrDefaultAsync(m => m.Id == id);
-            if (products == null)
-            {
-                return NotFound();
-            }
 
-            return View(products);
+            if (product == null) return NotFound();
+
+            return View(product);
         }
 
-        // GET: Products/Create
+        // GET: Products/Create (само админ)
+        [Authorize(Roles = "Admin")]
         public IActionResult Create()
         {
             return View();
         }
 
-        // POST: Products/Create
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
+        // POST: Products/Create (само админ)
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Create([Bind("Id,Name,Description,Price,Category")] Products products)
         {
-            if (ModelState.IsValid)
-            {
-                _context.Add(products);
-                await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
-            }
-            return View(products);
+            if (!ModelState.IsValid) return View(products);
+
+            _context.Add(products);
+            await _context.SaveChangesAsync();
+            return RedirectToAction(nameof(Index));
         }
 
-        // GET: Products/Edit/5
+        // GET: Products/Edit/5 (само админ)
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Edit(int? id)
         {
-            if (id == null)
-            {
-                return NotFound();
-            }
+            if (id == null) return NotFound();
 
             var products = await _context.Products.FindAsync(id);
-            if (products == null)
-            {
-                return NotFound();
-            }
+            if (products == null) return NotFound();
+
             return View(products);
         }
 
-        // POST: Products/Edit/5
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
+        // POST: Products/Edit/5 (само админ)
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Edit(int id, [Bind("Id,Name,Description,Price,Category")] Products products)
         {
-            if (id != products.Id)
+            if (id != products.Id) return NotFound();
+            if (!ModelState.IsValid) return View(products);
+
+            try
             {
-                return NotFound();
+                _context.Update(products);
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                bool exists = await _context.Products.AnyAsync(e => e.Id == products.Id);
+                if (!exists) return NotFound();
+                throw;
             }
 
-            if (ModelState.IsValid)
-            {
-                try
-                {
-                    _context.Update(products);
-                    await _context.SaveChangesAsync();
-                }
-                catch (DbUpdateConcurrencyException)
-                {
-                    if (!ProductsExists(products.Id))
-                    {
-                        return NotFound();
-                    }
-                    else
-                    {
-                        throw;
-                    }
-                }
-                return RedirectToAction(nameof(Index));
-            }
-            return View(products);
+            return RedirectToAction(nameof(Index));
         }
 
-        // GET: Products/Delete/5
+        // GET: Products/Delete/5 (само админ)
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Delete(int? id)
         {
-            if (id == null)
-            {
-                return NotFound();
-            }
+            if (id == null) return NotFound();
 
             var products = await _context.Products
+                .AsNoTracking()
                 .FirstOrDefaultAsync(m => m.Id == id);
-            if (products == null)
-            {
-                return NotFound();
-            }
+
+            if (products == null) return NotFound();
 
             return View(products);
         }
 
-        // POST: Products/Delete/5
+        // POST: Products/Delete/5 (само админ)
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
             var products = await _context.Products.FindAsync(id);
             if (products != null)
             {
                 _context.Products.Remove(products);
+                await _context.SaveChangesAsync();
             }
-
-            await _context.SaveChangesAsync();
             return RedirectToAction(nameof(Index));
-        }
-
-        private bool ProductsExists(int id)
-        {
-            return _context.Products.Any(e => e.Id == id);
         }
     }
 }

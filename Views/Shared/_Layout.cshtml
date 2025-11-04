@@ -17,8 +17,18 @@
     <link rel="stylesheet"
           href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
           crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+    @RenderSection("Styles", required: false)
 </head>
 <body>
+
+    <!-- Home Button -->
+    <a asp-controller="Home" asp-action="Index" class="home-btn" title="Начало">
+        <i class="fas fa-home" aria-hidden="true"></i>
+        <span class="visually-hidden">Начало</span>
+    </a>
+
+    <!-- Auth Buttons -->
     <div class="auth-bar">
         @if (SignInManager.IsSignedIn(User))
         {
@@ -40,32 +50,31 @@
         }
     </div>
 
+    <!-- Content -->
     <main class="tk-main">
         @RenderBody()
     </main>
 
+    <!-- Footer -->
     <footer class="main-footer">
         <div class="footer-container">
-
             <div class="footer-section">
                 <strong>TKGroopBG</strong><br />
-                Офис: Изгрев бл. 5<br />
+                Офис: Изгрев бл. 5
             </div>
 
             <div class="footer-section">
                 <span>Email:</span>
                 <a href="mailto:TKGroopBG@abv.bg">TKGroopBG@abv.bg</a><br />
-
                 <span>Телефон:</span>
                 <a href="tel:+35987723967">087723967</a>
             </div>
 
             <div class="footer-section footer-social">
-                <a href="https://facebook.com" target="_blank">
+                <a href="https://facebook.com" target="_blank" rel="noopener noreferrer" aria-label="Facebook">
                     <i class="fab fa-facebook"></i>
                 </a>
             </div>
-
         </div>
 
         <p class="footer-copy">© @DateTime.Now.Year TKGroopBG — Всички права запазени</p>
@@ -75,6 +84,7 @@
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>
+
 
 
 

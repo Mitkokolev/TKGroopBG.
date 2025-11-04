@@ -2,8 +2,8 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using TKGroopBG.Data;
 using TKGroopBG.Models;
@@ -19,13 +19,15 @@ namespace TKGroopBG.Controllers
             _context = context;
         }
 
-        // GET: Galleries
+        // GET: Galleries (видима за всички)
+        [AllowAnonymous]
         public async Task<IActionResult> Index()
         {
             return View(await _context.Gallery.ToListAsync());
         }
 
-        // GET: Galleries/Details/5
+        // GET: Galleries/Details/5 (видима за всички)
+        [AllowAnonymous]
         public async Task<IActionResult> Details(int? id)
         {
             if (id == null)
@@ -35,6 +37,7 @@ namespace TKGroopBG.Controllers
 
             var gallery = await _context.Gallery
                 .FirstOrDefaultAsync(m => m.Id == id);
+
             if (gallery == null)
             {
                 return NotFound();
@@ -43,17 +46,17 @@ namespace TKGroopBG.Controllers
             return View(gallery);
         }
 
-        // GET: Galleries/Create
+        // GET: Galleries/Create (само админ)
+        [Authorize(Roles = "Admin")]
         public IActionResult Create()
         {
             return View();
         }
 
-        // POST: Galleries/Create
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
+        // POST: Galleries/Create (само админ)
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Create([Bind("Id,Title,Description")] Gallery gallery)
         {
             if (ModelState.IsValid)
@@ -65,7 +68,8 @@ namespace TKGroopBG.Controllers
             return View(gallery);
         }
 
-        // GET: Galleries/Edit/5
+        // GET: Galleries/Edit/5 (само админ)
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Edit(int? id)
         {
             if (id == null)
@@ -81,11 +85,10 @@ namespace TKGroopBG.Controllers
             return View(gallery);
         }
 
-        // POST: Galleries/Edit/5
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
+        // POST: Galleries/Edit/5 (само админ)
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Edit(int id, [Bind("Id,Title,Description")] Gallery gallery)
         {
             if (id != gallery.Id)
@@ -116,7 +119,8 @@ namespace TKGroopBG.Controllers
             return View(gallery);
         }
 
-        // GET: Galleries/Delete/5
+        // GET: Galleries/Delete/5 (само админ)
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Delete(int? id)
         {
             if (id == null)
@@ -134,9 +138,10 @@ namespace TKGroopBG.Controllers
             return View(gallery);
         }
 
-        // POST: Galleries/Delete/5
+        // POST: Galleries/Delete/5 (само админ)
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
             var gallery = await _context.Gallery.FindAsync(id);
