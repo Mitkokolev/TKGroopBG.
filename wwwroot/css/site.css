@@ -4,19 +4,22 @@
     --tk-white: #fff;
     --tk-pale-gray: #f4f5f6;
     --radius: 14px;
+    --shadow-1: 0 8px 20px rgba(0,0,0,.12);
+    --shadow-2: 0 12px 30px rgba(0,0,0,.18);
+    --shadow-3: 0 14px 34px rgba(0,0,0,.15);
 }
 
-/* ===== Base & Layout (sticky footer) ===== */
+/* ===== Base & sticky footer ===== */
 html, body {
     height: 100%
 }
 
 body {
+    margin: 0;
     display: flex;
     flex-direction: column;
-    background: linear-gradient(180deg,var(--tk-pale-gray) 0%, #fff 100%);
+    background: linear-gradient(180deg,var(--tk-pale-gray) 0%,#fff 100%);
     color: #222;
-    margin: 0;
     font-family: Inter,Roboto,"Segoe UI",Arial,sans-serif;
 }
 
@@ -37,7 +40,7 @@ body {
     margin: -1px;
     overflow: hidden;
     clip: rect(0,0,0,0);
-    border: 0
+    border: 0;
 }
 
 /* ===== Animations ===== */
@@ -106,14 +109,47 @@ body {
     box-shadow: 0 2px 10px rgba(0,0,0,.12);
 }
 
+/* ===== AdminBar (partial) ===== */
+/* centered admin bar */
+.admin-bar-center {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    margin: 0 auto 18px; /* отстояние над съдържанието */
+}
+
+.admin-bar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: #fff;
+    border: 1px solid #eee;
+    border-radius: 12px;
+    padding: 10px 14px;
+    box-shadow: 0 6px 16px rgba(0,0,0,.08);
+    max-width: 920px; /* за да не се разтегля прекалено */
+}
+
 .badge-admin {
     background: var(--tk-red);
     color: var(--tk-white);
-    font-size: .7rem;
     font-weight: 800;
-    padding: 4px 6px;
-    border-radius: 6px;
+    font-size: .8rem;
+    padding: 6px 10px;
+    border-radius: 8px;
 }
+
+.admin-actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+    .admin-actions .btn,
+    .admin-actions a.btn {
+        border-radius: 10px;
+    }
+
 
 /* ===== Home Button (top-left) ===== */
 .home-btn {
@@ -141,7 +177,12 @@ body {
         box-shadow: 0 6px 18px rgba(0,0,0,.35)
     }
 
-/* ===== Home hero (logo + subtitle + cards) ===== */
+    .home-btn:focus {
+        outline: 3px solid rgba(194,24,27,.35);
+        outline-offset: 2px
+    }
+
+/* ===== Home hero ===== */
 .home-hero {
     min-height: calc(100vh - 220px);
     display: flex;
@@ -149,14 +190,16 @@ body {
     align-items: center;
     justify-content: center;
     text-align: center;
-    padding: 90px 20px 60px;
+    padding: 120px 20px 60px;
     gap: 34px;
 }
 
 .hero-logo {
     display: flex;
     flex-direction: column;
-    align-items: center
+    align-items: center;
+    width: 100%;
+    text-align: center
 }
 
 .logo-icon {
@@ -215,7 +258,7 @@ body {
     letter-spacing: 1px
 }
 
-/* ===== Home page cards ===== */
+/* ===== Home cards ===== */
 .home-grid {
     width: 100%;
     max-width: 1100px;
@@ -246,7 +289,7 @@ body {
     height: 100%;
     object-fit: cover;
     filter: brightness(.82);
-    transition: filter .35s ease;
+    transition: filter .35s ease
 }
 
 .menu-card:hover .card-img {
@@ -255,8 +298,7 @@ body {
 
 .card-overlay {
     position: absolute;
-    bottom: 0;
-    width: 100%;
+    inset: auto 0 0 0;
     text-align: center;
     color: #fff;
     background: rgba(0,0,0,.55);
@@ -285,7 +327,7 @@ body {
 .product-card {
     background: #fff;
     border-radius: var(--radius);
-    box-shadow: 0 8px 20px rgba(0,0,0,.12);
+    box-shadow: var(--shadow-1);
     overflow: hidden;
     display: flex;
     flex-direction: column;
@@ -294,7 +336,7 @@ body {
 
     .product-card:hover {
         transform: translateY(-4px);
-        box-shadow: 0 16px 28px rgba(0,0,0,.18)
+        box-shadow: var(--shadow-2)
     }
 
 .product-img {
@@ -388,7 +430,7 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 90px 16px 40px;
+    padding: 120px 16px 40px; /* повече top заради fixed бутони */
 }
 
 .auth-card-box {
@@ -397,7 +439,7 @@ body {
     background: rgba(255,255,255,.9);
     backdrop-filter: blur(8px);
     border-radius: 14px;
-    box-shadow: 0 14px 34px rgba(0,0,0,.15);
+    box-shadow: var(--shadow-3);
     padding: 26px 24px 28px;
 }
 
@@ -412,6 +454,7 @@ body {
     height: 46px;
     border-radius: 10px;
     border: 1px solid #e3e3e3;
+    width: 100%;
     transition: box-shadow .2s, border-color .2s;
 }
 
@@ -469,22 +512,23 @@ body {
         grid-template-columns: 1fr
     }
 }
+
+/* Minor fixes for hero spacing on some pages */
 .home-hero {
-    padding-top: 120px;
+    padding-top: 120px
 }
+
 .hero-logo {
     align-items: center;
     text-align: center;
-}
-
-.home-hero, .hero-logo {
-    width: 100%;
+    width: 100%
 }
 
 .home-grid {
     max-width: 1100px;
-    margin: 0 auto;
+    margin: 0 auto
 }
+
 .logo-text, .logo-subtext {
-    margin-left: 0;
+    margin-left: 0
 }

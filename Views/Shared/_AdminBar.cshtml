@@ -1,0 +1,18 @@
+﻿@using Microsoft.AspNetCore.Identity
+@inject SignInManager<IdentityUser> SignInManager
+
+@if (SignInManager.IsSignedIn(User) && User.IsInRole("Admin"))
+{
+    <div class="admin-bar-center">
+        <div class="admin-bar">
+            <span class="badge-admin">ADMIN</span>
+
+            @if (ViewBag.AdminButtons is string content && !string.IsNullOrWhiteSpace(content))
+            {
+                <div class="admin-actions">
+                    @Html.Raw(content)
+                </div>
+            }
+        </div>
+    </div>
+}

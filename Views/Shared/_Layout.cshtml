@@ -39,6 +39,7 @@
                       asp-page="/Account/Logout"
                       asp-route-returnUrl="~/"
                       method="post">
+                    @Html.AntiForgeryToken()
                     <button type="submit" class="btn-auth btn-auth-danger">Изход</button>
                 </form>
             </div>
@@ -52,6 +53,8 @@
 
     <!-- Content -->
     <main class="tk-main">
+        @* 👉 Админ лента – ще се покаже само ако има влязъл Admin *@
+        <partial name="_AdminBar" />
         @RenderBody()
     </main>
 
@@ -84,6 +87,7 @@
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>
+
 
 
 
