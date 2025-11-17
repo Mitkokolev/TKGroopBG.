@@ -1,42 +1,35 @@
-﻿@model IEnumerable<TKGroopBG.Models.Gallery>
-
+﻿@model IEnumerable<TKGroopBG.Models.Products>
 @{
-    ViewData["Title"] = "Галерия";
+    ViewData["Title"] = ViewBag.Category ?? "Продукти";
     Layout = "~/Views/Shared/_Layout.cshtml";
-
-    // (optional) will show in your top admin bar if you render _AdminBar in _Layout
-    if (User.IsInRole("Admin"))
-    {
-        ViewBag.AdminButtons = @"
-            <a class='btn btn-outline-danger' href='/Galleries/Create'>+ Добави снимка</a>
-        ";
-    }
 }
 
 <div class="container mt-5 text-center">
-    <h2 class="text-danger fw-bold mb-2">Галерия</h2>
-    <p class="text-muted mb-4">Реализирани обекти и примери от нашата работа.</p>
+    <h2 class="text-danger fw-bold mb-2">@ViewData["Title"]</h2>
+    <p class="text-muted mb-4">Продукти от избраната категория.</p>
 
-    <div class="products-grid" style="grid-template-columns: repeat(4, 1fr);">
+    <div class="products-grid">
         @foreach (var item in Model)
         {
-            // Име на файла: Title -> Title_with_underscores.jpg
-            var imageName = $"{(item.Title ?? string.Empty).Replace(" ", "_")}.jpg";
-            var imagePath = Url.Content($"~/gallery/{imageName}");
+            var imageName = $"{(item.Name ?? string.Empty).Replace(" ", "_")}.jpg";
+            var imagePath = Url.Content($"~/images/{imageName}");
             var fallback = Url.Content("~/images/default.jpg");
 
             <div class="product-card">
-                <img src="@imagePath"
-                     alt="@item.Title"
-                     class="product-img"
-                     onerror="this.onerror=null; this.src='@fallback';" />
-
+                <img src="@imagePath" alt="@item.Name" class="product-img" onerror="this.src='@fallback'" />
                 <div class="product-info">
-                    <h3>@item.Title</h3>
+                    <h3>@item.Name</h3>
 
                     @if (!string.IsNullOrWhiteSpace(item.Description))
                     {
                         <p>@item.Description</p>
+                    }
+
+                    <span class="product-price">@item.Price.ToString("0.00") лв.</span>
+
+                    @if (!string.IsNullOrWhiteSpace(item.Category))
+                    {
+                        <p class="text-muted small">@item.Category</p>
                     }
 
                     <div class="product-actions mt-2">
@@ -53,5 +46,3 @@
         }
     </div>
 </div>
-
-

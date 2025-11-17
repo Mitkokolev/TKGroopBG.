@@ -16,15 +16,46 @@ namespace TKGroopBG.Controllers
             _context = context;
         }
 
-        // GET: Products (публично)
+        // ================== КАТЕГОРИИ ==================
+
+        // /Products -> показва плочки с категории (като home)
         [AllowAnonymous]
-        public async Task<IActionResult> Index()
+        public IActionResult Index()
         {
-            var items = await _context.Products.AsNoTracking().ToListAsync();
-            return View(items);
+            // Тук си подреждаш както искаш категориите
+            var categories = new[]
+            {
+                "Алуминиеви изделия",
+                "PVC дограма",
+                "Щори",
+                "Врати",
+                "Мрежи против насекоми"
+            };
+
+            return View("Categories", categories);
         }
 
-        // GET: Products/Details/5 (публично)
+        // /Products/Category?id=PVC%20дограма
+        // показва продуктите от дадена категория
+        [AllowAnonymous]
+        public async Task<IActionResult> Category(string id)
+        {
+            if (string.IsNullOrWhiteSpace(id))
+            {
+                return RedirectToAction(nameof(Index));
+            }
+
+            var items = await _context.Products
+                .AsNoTracking()
+                .Where(p => p.Category == id)
+                .ToListAsync();
+
+            ViewBag.Category = id;
+            return View("List", items);
+        }
+
+        // ================== ДЕТАЙЛИ (публично) ==================
+
         [AllowAnonymous]
         public async Task<IActionResult> Details(int? id)
         {
@@ -39,14 +70,14 @@ namespace TKGroopBG.Controllers
             return View(product);
         }
 
-        // GET: Products/Create (само админ)
+        // ================== CREATE (Admin) ==================
+
         [Authorize(Roles = "Admin")]
         public IActionResult Create()
         {
             return View();
         }
 
-        // POST: Products/Create (само админ)
         [HttpPost]
         [ValidateAntiForgeryToken]
         [Authorize(Roles = "Admin")]
@@ -59,7 +90,8 @@ namespace TKGroopBG.Controllers
             return RedirectToAction(nameof(Index));
         }
 
-        // GET: Products/Edit/5 (само админ)
+        // ================== EDIT (Admin) ==================
+
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Edit(int? id)
         {
@@ -71,7 +103,6 @@ namespace TKGroopBG.Controllers
             return View(products);
         }
 
-        // POST: Products/Edit/5 (само админ)
         [HttpPost]
         [ValidateAntiForgeryToken]
         [Authorize(Roles = "Admin")]
@@ -95,7 +126,8 @@ namespace TKGroopBG.Controllers
             return RedirectToAction(nameof(Index));
         }
 
-        // GET: Products/Delete/5 (само админ)
+        // ================== DELETE (Admin) ==================
+
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Delete(int? id)
         {
@@ -110,7 +142,6 @@ namespace TKGroopBG.Controllers
             return View(products);
         }
 
-        // POST: Products/Delete/5 (само админ)
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
         [Authorize(Roles = "Admin")]
