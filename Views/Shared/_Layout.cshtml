@@ -53,8 +53,6 @@
 
     <!-- Content -->
     <main class="tk-main">
-        @* 👉 Админ лента – ще се покаже само ако има влязъл Admin *@
-        <partial name="_AdminBar" />
         @RenderBody()
     </main>
 
@@ -87,6 +85,8 @@
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>
+
+
 
 
 
