@@ -1,33 +1,31 @@
 ﻿@model IEnumerable<string>
+
 @{
     ViewData["Title"] = "Продукти";
     Layout = "~/Views/Shared/_Layout.cshtml";
+
+    if (User.IsInRole("Admin"))
+    {
+        ViewBag.AdminButtons = @"
+            <a class='btn btn-outline-danger' href='/Products/Create'>
+                + Добави нов продукт
+            </a>";
+    }
 }
 
-<section class="home-hero fade-up">
-    <div class="hero-logo">
-        <div class="logo-icon">
-            <div class="tk-symbol">
-                <span class="t">T</span><span class="k">K</span>
-                <div class="arc"></div>
-            </div>
-        </div>
-        <h1 class="logo-text">Категории продукти</h1>
-        <h3 class="logo-subtext">Изберете категория</h3>
-    </div>
+<div class="container mt-5 text-center">
+    <h2 class="text-danger fw-bold mb-2">Продуктови категории</h2>
+    <p class="text-muted mb-4">Изберете категория, за да видите продуктите.</p>
 
     <div class="home-grid">
         @foreach (var cat in Model)
         {
-            var safe = cat.Replace(" ", "_");
-            var src = Url.Content($"~/images/categories/{safe}.jpg");
-            var fallback = Url.Content("~/images/default.jpg");
-
-            <a asp-action="Category" asp-route-id="@cat" class="menu-card fade-up">
-                <img src="@src" class="card-img" alt="@cat" onerror="this.src='@fallback'">
+            <a asp-action="Category" asp-route-id="@cat" class="menu-card">
+                <img src="~/images/default.jpg" class="card-img" alt="@cat" />
                 <div class="card-overlay">@cat</div>
             </a>
         }
     </div>
-</section>
+</div>
+
 

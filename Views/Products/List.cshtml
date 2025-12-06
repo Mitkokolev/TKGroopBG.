@@ -1,11 +1,22 @@
 ﻿@model IEnumerable<TKGroopBG.Models.Products>
+
 @{
-    ViewData["Title"] = ViewBag.Category ?? "Продукти";
+    var category = ViewBag.Category as string ?? "Продукти";
+
+    ViewData["Title"] = category;
     Layout = "~/Views/Shared/_Layout.cshtml";
+
+    if (User.IsInRole("Admin"))
+    {
+        ViewBag.AdminButtons = $@"
+            <a class='btn btn-outline-danger' href='/Products/Create?category={category}'>
+                + Добави продукт в {category}
+            </a>";
+    }
 }
 
 <div class="container mt-5 text-center">
-    <h2 class="text-danger fw-bold mb-2">@ViewData["Title"]</h2>
+    <h2 class="text-danger fw-bold mb-2">@category</h2>
     <p class="text-muted mb-4">Продукти от избраната категория.</p>
 
     <div class="products-grid">
@@ -16,7 +27,11 @@
             var fallback = Url.Content("~/images/default.jpg");
 
             <div class="product-card">
-                <img src="@imagePath" alt="@item.Name" class="product-img" onerror="this.src='@fallback'" />
+                <img src="@imagePath"
+                     alt="@item.Name"
+                     class="product-img"
+                     onerror="this.src='@fallback'" />
+
                 <div class="product-info">
                     <h3>@item.Name</h3>
 

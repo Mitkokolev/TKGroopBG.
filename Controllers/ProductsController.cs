@@ -1,4 +1,6 @@
-﻿using System.Threading.Tasks;
+﻿using System.Linq;
+using System.Threading.Tasks;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -11,6 +13,16 @@ namespace TKGroopBG.Controllers
     {
         private readonly ApplicationDbContext _context;
 
+        // ТУК си държим категориите и ги ползваме навсякъде
+        private static readonly string[] Categories = new[]
+        {
+            "Алуминиеви изделия",
+            "PVC дограма",
+            "Щори",
+            "Врати",
+            "Мрежи против насекоми"
+        };
+
         public ProductsController(ApplicationDbContext context)
         {
             _context = context;
@@ -22,17 +34,8 @@ namespace TKGroopBG.Controllers
         [AllowAnonymous]
         public IActionResult Index()
         {
-            // Тук си подреждаш както искаш категориите
-            var categories = new[]
-            {
-                "Алуминиеви изделия",
-                "PVC дограма",
-                "Щори",
-                "Врати",
-                "Мрежи против насекоми"
-            };
-
-            return View("Categories", categories);
+            // подаваме листа от категории към view-то "Categories"
+            return View("Categories", Categories);
         }
 
         // /Products/Category?id=PVC%20дограма
@@ -75,6 +78,8 @@ namespace TKGroopBG.Controllers
         [Authorize(Roles = "Admin")]
         public IActionResult Create()
         {
+            // ТУК вече подаваме реален масив, не null
+            ViewBag.Categories = Categories;
             return View();
         }
 
@@ -83,7 +88,12 @@ namespace TKGroopBG.Controllers
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Create([Bind("Id,Name,Description,Price,Category")] Products products)
         {
-            if (!ModelState.IsValid) return View(products);
+            if (!ModelState.IsValid)
+            {
+                // при грешки пак подаваме категориите към ViewBag
+                ViewBag.Categories = Categories;
+                return View(products);
+            }
 
             _context.Add(products);
             await _context.SaveChangesAsync();
@@ -100,6 +110,8 @@ namespace TKGroopBG.Controllers
             var products = await _context.Products.FindAsync(id);
             if (products == null) return NotFound();
 
+            // ако Edit view-то ти има dropdown за Category – подаваме отново
+            ViewBag.Categories = Categories;
             return View(products);
         }
 
@@ -109,7 +121,12 @@ namespace TKGroopBG.Controllers
         public async Task<IActionResult> Edit(int id, [Bind("Id,Name,Description,Price,Category")] Products products)
         {
             if (id != products.Id) return NotFound();
-            if (!ModelState.IsValid) return View(products);
+
+            if (!ModelState.IsValid)
+            {
+                ViewBag.Categories = Categories;
+                return View(products);
+            }
 
             try
             {
