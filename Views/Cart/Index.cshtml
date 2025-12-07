@@ -1,127 +1,162 @@
-﻿namespace TKGroopBG.Views.Cart
-{
-    public class Index
-    {
-@{
-    ViewData["Title"] = "Количка";
+﻿@{
+    ViewData["Title"] = "Твоята количка";
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
 
-<div class="container mt-5">
-    <h2 class="text-danger fw-bold mb-3">Количка</h2>
-    <p class="text-muted">Тук виждаш избраните продукти, размери и ориентировъчна цена.</p>
+<div class="container mt-5 cart-page">
+    <h2 class="text-danger fw-bold mb-3">Твоята количка</h2>
+    <p class="text-muted">
+                          .
+    </p>
 
-    <div id="cart-empty" class="alert alert-light mt-3">
-        Количката е празна.
+    <div id="cart-empty" class="alert alert-info d-none">
+        Количката е празна. Добави продукти от каталога.
     </div>
 
-    <div id="cart-container" class="mt-3" style="display:none;">
-        <div class="table-responsive">
-            <table class="table align-middle">
-                <thead class="table-light">
-                    <tr>
-                        <th>#</th>
-                        <th>Продукт</th>
-                        <th>Цвят</th>
-                        <th>Размери (мм)</th>
-                        <th>Площ</th>
-                        <th>Цена</th>
-                    </tr>
-                </thead>
-                <tbody id="cart-rows"></tbody>
-            </table>
-        </div>
+    <div id="cart-wrapper">
+        <table class="table cart-table align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th>Продукт</th>
+                    <th class="text-center">Размери (мм)</th>
+                    <th class="text-center">Цвят</th>
+                    <th class="text-center">Площ (м²)</th>
+                    <th class="text-end">Цена (лв.)</th>
+                    <th class="text-center">Действия</th>
+                </tr>
+            </thead>
+            <tbody id="cart-body">
+                @* редовете ще се добавят от JS *@
+            </tbody>
+            <tfoot class="table-light">
+                <tr>
+                    <th colspan="3" class="text-end">Общо:</th>
+                    <th class="text-center" id="cart-total-area">0.000</th>
+                    <th class="text-end" id="cart-total-price">0.00 лв.</th>
+                    <th></th>
+                </tr>
+            </tfoot>
+        </table>
 
-        <div class="d-flex justify-content-end mt-3">
-            <h5>Общо: <span id="cart-total">0.00 лв.</span></h5>
-        </div>
-    </div>
+        <div class="d-flex justify-content-between mt-3 cart-actions-row">
+            <button id="clearCartBtn" class="btn btn-outline-secondary">
+                Изчисти количката
+            </button>
 
-    <div class="mt-4 d-flex gap-2">
-        <a asp-controller="Products" asp-action="Index" class="btn btn-outline-secondary">
-            ← Обратно към продуктите
-        </a>
-        <button id="cart-clear" class="btn btn-outline-danger">
-            Изчисти количката
-        </button>
+            <a asp-controller="Cart" asp-action="Order" class="btn btn-danger">
+                Продължи към заявка
+            </a>
+        </div>
     </div>
 </div>
 
 @section Scripts {
     <script>
-        function loadCart() {
-            let items = [];
+        // Взимаме количката от localStorage
+        function getCart() {
             try {
                 const raw = localStorage.getItem("tk_cart");
-                if (raw) {
-                    const parsed = JSON.parse(raw);
-                    if (Array.isArray(parsed)) {
-                        items = parsed;
-                    }
-                }
+                if (!raw) return [];
+                const arr = JSON.parse(raw);
+                return Array.isArray(arr) ? arr : [];
             } catch (e) {
-                items = [];
+                return [];
             }
+        }
 
-            const empty = document.getElementById('cart-empty');
-            const cont = document.getElementById('cart-container');
-            const tbody = document.getElementById('cart-rows');
-            const totalSpan = document.getElementById('cart-total');
+        function setCart(cart) {
+            localStorage.setItem("tk_cart", JSON.stringify(cart));
+            // обновяваме броя в иконката горе
+            if (typeof updateCartCount === "function") {
+                updateCartCount();
+            }
+        }
 
-            tbody.innerHTML = '';
-            let total = 0;
+        function renderCart() {
+            const cart = getCart();
+            const body = document.getElementById("cart-body");
+            const empty = document.getElementById("cart-empty");
+            const wrapper = document.getElementById("cart-wrapper");
+            const totalAreaCell = document.getElementById("cart-total-area");
+            const totalPriceCell = document.getElementById("cart-total-price");
 
-            if (items.length === 0) {
-                empty.style.display = 'block';
-                cont.style.display = 'none';
-                totalSpan.textContent = "0.00 лв.";
+            body.innerHTML = "";
+
+            if (cart.length === 0) {
+                empty.classList.remove("d-none");
+                wrapper.classList.add("d-none");
+                totalAreaCell.textContent = "0.000";
+                totalPriceCell.textContent = "0.00 лв.";
                 return;
             }
 
-            empty.style.display = 'none';
-            cont.style.display = 'block';
+            empty.classList.add("d-none");
+            wrapper.classList.remove("d-none");
 
-            items.forEach((it, idx) => {
-                const tr = document.createElement('tr');
+            let totalArea = 0;
+            let totalPrice = 0;
 
-                const height = it.heightMm || 0;
-                const width = it.widthMm || 0;
-                const sizeText = (height && width) ? `${width} x ${height}` : "";
-                const area = Number(it.areaM2 || 0);
-                const totalPrice = Number(it.totalPrice || 0);
+            cart.forEach((item, index) => {
+                const tr = document.createElement("tr");
 
-                total += totalPrice;
+                const sizeText = `${item.heightMm} x ${item.widthMm}`;
+                const areaText = (item.areaM2 || 0).toFixed(3);
+                const priceText = (item.totalPrice || 0).toFixed(2);
+
+                totalArea += item.areaM2 || 0;
+                totalPrice += item.totalPrice || 0;
 
                 tr.innerHTML = `
-                    <td>${idx + 1}</td>
-                    <td>${it.name || ""}</td>
-                    <td>${it.variantColor || ""}</td>
-                    <td>${sizeText}</td>
-                    <td>${area.toFixed(3)} м²</td>
-                    <td>${totalPrice.toFixed(2)} лв.</td>
+                    <td>${item.name || ""}</td>
+                    <td class="text-center">${sizeText}</td>
+                    <td class="text-center">${item.variantColor || "-"}</td>
+                    <td class="text-center">${areaText}</td>
+                    <td class="text-end">${priceText} лв.</td>
+                    <td class="text-center">
+                        <button class="btn btn-sm btn-outline-danger cart-remove-btn"
+                                data-index="${index}">
+                            Премахни
+                        </button>
+                    </td>
                 `;
 
-                tbody.appendChild(tr);
+                body.appendChild(tr);
             });
 
-            totalSpan.textContent = total.toFixed(2) + " лв.";
+            totalAreaCell.textContent = totalArea.toFixed(3);
+            totalPriceCell.textContent = totalPrice.toFixed(2) + " лв.";
+
+            // закачаме събития за премахване
+            document.querySelectorAll(".cart-remove-btn").forEach(btn => {
+                btn.addEventListener("click", function () {
+                    const idx = parseInt(this.getAttribute("data-index"));
+                    removeFromCart(idx);
+                });
+            });
         }
 
-        document.addEventListener('DOMContentLoaded', function () {
-            loadCart();
-        });
+        function removeFromCart(index) {
+            const cart = getCart();
+            if (index >= 0 && index < cart.length) {
+                cart.splice(index, 1);
+                setCart(cart);
+                renderCart();
+            }
+        }
 
-        document.getElementById('cart-clear').addEventListener('click', function () {
-            if (confirm("Сигурен ли си, че искаш да изчистиш количката?")) {
-                localStorage.removeItem("tk_cart");
-                loadCart();
-                if (typeof updateCartCount === "function") {
-                    updateCartCount();
-                }
+        function clearCart() {
+            if (!confirm("Сигурен ли си, че искаш да изчистиш количката?")) return;
+            setCart([]);
+            renderCart();
+        }
+
+        document.addEventListener("DOMContentLoaded", function () {
+            renderCart();
+
+            const clearBtn = document.getElementById("clearCartBtn");
+            if (clearBtn) {
+                clearBtn.addEventListener("click", clearCart);
             }
         });
     </script>
-}
-
-    }
 }

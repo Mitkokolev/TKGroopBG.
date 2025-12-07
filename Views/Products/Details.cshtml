@@ -16,7 +16,8 @@
         id = Model.Id,
         name = Model.Name,
         price = Model.Price,
-        category = Model.Category
+        category = Model.Category,
+        image = imagePath
     });
 }
 
@@ -115,7 +116,7 @@
 @section Scripts {
     <script>
         // Данни за продукта от сървъра (Id, име, базова цена и т.н.)
-        const product = @Html.Raw(@productJson);
+        const product = @Html.Raw(productJson);
 
         // текущо избран цвят
         let selectedColor = "Бял";
@@ -186,24 +187,30 @@
                 cart = [];
             }
 
-            // правим запис
+            // запис с полетата, които Cart/Index очаква
             const cartItem = {
-                productId: product.id,
+                id: product.id,
                 name: product.name,
                 category: product.category,
                 basePrice: basePrice,
                 heightMm: h,
                 widthMm: w,
                 areaM2: areaM2,
-                variantColor: selectedColor,
-                totalPrice: Number(totalPrice.toFixed(2)),
+                finalPrice: Number(totalPrice.toFixed(2)),
+                color: selectedColor,
+                image: document.getElementById('mainProductImage').src,
                 createdAt: new Date().toISOString()
             };
 
             cart.push(cartItem);
             localStorage.setItem("tk_cart", JSON.stringify(cart));
 
-            alert("Продуктът е добавен в количката.");
+            // обновяваме баджа горе вдясно, ако функцията съществува
+            if (typeof updateCartBadge === "function") {
+                updateCartBadge();
+            }
+
+            alert("Продуктът е добавен в количката ✅");
         });
     </script>
 }

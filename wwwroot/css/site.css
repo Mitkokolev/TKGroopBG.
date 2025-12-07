@@ -11,7 +11,7 @@
 
 /* ===== Base & sticky footer ===== */
 html, body {
-    height: 100%
+    height: 100%;
 }
 
 body {
@@ -24,11 +24,23 @@ body {
 }
 
 .tk-main {
-    flex: 1 0 auto
+    flex: 1 0 auto;
 }
 
 .main-footer {
-    flex-shrink: 0
+    flex-shrink: 0;
+}
+
+.main-footer {
+    background: var(--tk-black);
+    color: #fff;
+    padding: 15px 10px; /* по-малък */
+    margin-top: 30px; /* ако искаш по-близо до съдържанието */
+}
+
+.footer-container {
+    gap: 15px; /* беше 30px */
+    margin-bottom: 5px; /* беше 10px */
 }
 
 /* Utils */
@@ -47,17 +59,17 @@ body {
 @keyframes fadeUp {
     from {
         opacity: 0;
-        transform: translateY(14px)
+        transform: translateY(14px);
     }
 
     to {
         opacity: 1;
-        transform: translateY(0)
+        transform: translateY(0);
     }
 }
 
 .fade-up {
-    animation: fadeUp .5s ease both
+    animation: fadeUp .5s ease both;
 }
 
 /* ===== Auth bar (top-right) ===== */
@@ -86,17 +98,17 @@ body {
 
     .btn-auth:hover {
         transform: translateY(-2px);
-        box-shadow: 0 6px 16px rgba(0,0,0,.18)
+        box-shadow: 0 6px 16px rgba(0,0,0,.18);
     }
 
 .btn-auth-danger {
     border-color: var(--tk-red);
     background: var(--tk-red);
-    color: var(--tk-white)
+    color: var(--tk-white);
 }
 
     .btn-auth-danger:hover {
-        filter: brightness(1.05)
+        filter: brightness(1.05);
     }
 
 .auth-user {
@@ -115,7 +127,7 @@ body {
     width: 100%;
     display: flex;
     justify-content: center;
-    margin: 0 auto 18px; /* отстояние над съдържанието */
+    margin: 0 auto 18px;
 }
 
 .admin-bar {
@@ -127,7 +139,7 @@ body {
     border-radius: 12px;
     padding: 10px 14px;
     box-shadow: 0 6px 16px rgba(0,0,0,.08);
-    max-width: 920px; /* за да не се разтегля прекалено */
+    max-width: 920px;
 }
 
 .badge-admin {
@@ -149,7 +161,6 @@ body {
     .admin-actions a.btn {
         border-radius: 10px;
     }
-
 
 /* ===== Home Button (top-left) ===== */
 .home-btn {
@@ -174,12 +185,12 @@ body {
     .home-btn:hover {
         background: #a41010;
         transform: translateY(-2px);
-        box-shadow: 0 6px 18px rgba(0,0,0,.35)
+        box-shadow: 0 6px 18px rgba(0,0,0,.35);
     }
 
     .home-btn:focus {
         outline: 3px solid rgba(194,24,27,.35);
-        outline-offset: 2px
+        outline-offset: 2px;
     }
 
 /* ===== Home hero ===== */
@@ -199,7 +210,7 @@ body {
     flex-direction: column;
     align-items: center;
     width: 100%;
-    text-align: center
+    text-align: center;
 }
 
 .logo-icon {
@@ -220,16 +231,16 @@ body {
     letter-spacing: -10px;
     color: #fff;
     display: flex;
-    align-items: center
+    align-items: center;
 }
 
     .tk-symbol .t {
-        transform: translateX(4px)
+        transform: translateX(4px);
     }
 
     .tk-symbol .k {
         color: var(--tk-red);
-        transform: translateX(-2px)
+        transform: translateX(-2px);
     }
 
     .tk-symbol .arc {
@@ -239,7 +250,7 @@ body {
         height: 110%;
         border-top: 8px solid var(--tk-red);
         border-radius: 50%;
-        transform: rotate(-10deg)
+        transform: rotate(-10deg);
     }
 
 .logo-text {
@@ -247,7 +258,7 @@ body {
     font-size: clamp(1.4rem,2.3vw,2rem);
     color: var(--tk-black);
     margin-top: 15px;
-    letter-spacing: 2px
+    letter-spacing: 2px;
 }
 
 .logo-subtext {
@@ -255,7 +266,7 @@ body {
     font-weight: 700;
     font-size: clamp(1rem,1.6vw,1.1rem);
     margin-top: 4px;
-    letter-spacing: 1px
+    letter-spacing: 1px;
 }
 
 /* ===== Home cards ===== */
@@ -281,7 +292,7 @@ body {
 
     .menu-card:hover {
         transform: scale(1.05);
-        box-shadow: 0 12px 30px rgba(0,0,0,.5)
+        box-shadow: 0 12px 30px rgba(0,0,0,.5);
     }
 
 .card-img {
@@ -289,11 +300,11 @@ body {
     height: 100%;
     object-fit: cover;
     filter: brightness(.82);
-    transition: filter .35s ease
+    transition: filter .35s ease;
 }
 
 .menu-card:hover .card-img {
-    filter: brightness(1)
+    filter: brightness(1);
 }
 
 .card-overlay {
@@ -311,7 +322,7 @@ body {
 }
 
 .menu-card:hover .card-overlay {
-    background: rgba(0,0,0,.75)
+    background: rgba(0,0,0,.75);
 }
 
 /* ===== Products / Gallery grids ===== */
@@ -336,42 +347,42 @@ body {
 
     .product-card:hover {
         transform: translateY(-4px);
-        box-shadow: var(--shadow-2)
+        box-shadow: var(--shadow-2);
     }
 
 .product-img {
     width: 100%;
     height: 160px;
-    object-fit: cover
+    object-fit: cover;
 }
 
 .product-info {
     padding: 14px 14px 16px;
-    text-align: left
+    text-align: left;
 }
 
     .product-info h3 {
         font-size: 1.05rem;
         margin: 0 0 6px;
-        font-weight: 800
+        font-weight: 800;
     }
 
     .product-info p {
-        margin: 0 0 8px
+        margin: 0 0 8px;
     }
 
 .product-price {
     display: inline-block;
     font-weight: 800;
     color: var(--tk-red);
-    margin-top: 2px
+    margin-top: 2px;
 }
 
 .product-actions {
     display: flex;
     gap: 8px;
     flex-wrap: wrap;
-    margin-top: 8px
+    margin-top: 8px;
 }
 
 /* ===== Footer ===== */
@@ -394,34 +405,34 @@ body {
 
 .footer-section {
     font-size: .95rem;
-    line-height: 1.6
+    line-height: 1.6;
 }
 
     .footer-section a {
         color: var(--tk-red);
         font-weight: 600;
-        text-decoration: none
+        text-decoration: none;
     }
 
         .footer-section a:hover {
-            text-decoration: underline
+            text-decoration: underline;
         }
 
 .footer-social i {
     font-size: 32px;
     color: #fff;
-    transition: .3s ease
+    transition: .3s ease;
 }
 
     .footer-social i:hover {
         transform: scale(1.2);
-        color: #1877f2
+        color: #1877f2;
     }
 
 .footer-copy {
     font-size: .85rem;
     color: #aaa;
-    margin-top: 10px
+    margin-top: 10px;
 }
 
 /* ===== Auth pages (Login / Register) ===== */
@@ -430,7 +441,7 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 120px 16px 40px; /* повече top заради fixed бутони */
+    padding: 120px 16px 40px;
 }
 
 .auth-card-box {
@@ -447,7 +458,7 @@ body {
     text-align: center;
     font-weight: 800;
     margin-bottom: 18px;
-    color: var(--tk-red)
+    color: var(--tk-red);
 }
 
 .auth-input {
@@ -461,79 +472,79 @@ body {
     .auth-input:focus {
         outline: none;
         border-color: var(--tk-red);
-        box-shadow: 0 0 0 3px rgba(194,24,27,.18)
+        box-shadow: 0 0 0 3px rgba(194,24,27,.18);
     }
 
 .auth-link {
     color: var(--tk-red);
     font-weight: 600;
-    text-decoration: none
+    text-decoration: none;
 }
 
     .auth-link:hover {
-        text-decoration: underline
+        text-decoration: underline;
     }
 
 /* ===== Responsive ===== */
 @media (max-width:1200px) {
     .products-grid {
-        grid-template-columns: repeat(4,1fr)
+        grid-template-columns: repeat(4,1fr);
     }
 }
 
 @media (max-width:992px) {
     .auth-hello {
-        display: none
+        display: none;
     }
 
     .products-grid {
-        grid-template-columns: repeat(3,1fr)
+        grid-template-columns: repeat(3,1fr);
     }
 }
 
 @media (max-width:768px) {
     .products-grid {
-        grid-template-columns: repeat(2,1fr)
+        grid-template-columns: repeat(2,1fr);
     }
 }
 
 @media (max-width:576px) {
     .auth-bar {
         top: 10px;
-        right: 10px
+        right: 10px;
     }
 
     .btn-auth {
         padding: 8px 10px;
-        font-size: .85rem
+        font-size: .85rem;
     }
 
     .products-grid {
-        grid-template-columns: 1fr
+        grid-template-columns: 1fr;
     }
 }
 
 /* Minor fixes for hero spacing on some pages */
 .home-hero {
-    padding-top: 120px
+    padding-top: 120px;
 }
 
 .hero-logo {
     align-items: center;
     text-align: center;
-    width: 100%
+    width: 100%;
 }
 
 .home-grid {
     max-width: 1100px;
-    margin: 0 auto
+    margin: 0 auto;
 }
 
 .logo-text, .logo-subtext {
-    margin-left: 0
+    margin-left: 0;
 }
 
-/* ===== Product details page ===== */
+/* ===== Product details page (старият layout, почти неизползван, но оставен) ===== */
 .product-page {
     max-width: 1200px;
 }
@@ -683,7 +694,7 @@ body {
     border-radius: 10px;
 }
 
-/* responsive */
+/* responsive за product-main */
 @media (max-width: 992px) {
     .product-main {
         grid-template-columns: 1fr;
@@ -694,6 +705,7 @@ body {
     }
 }
 
+/* ===== Новият product details layout ===== */
 .product-clickable {
     display: block;
     text-decoration: none;
@@ -774,43 +786,107 @@ body {
     padding: 10px 12px;
 }
 
-/* ===== Cart floating button (bottom-right) ===== */
+/* ===== Cart floating button ===== */
 .cart-btn {
     position: fixed;
-    right: 18px;
-    bottom: 20px;
-    z-index: 2100;
-    width: 52px;
-    height: 52px;
-    border-radius: 50%;
-    background: var(--tk-black);
-    color: var(--tk-white);
+    top: 85px;
+    right: 25px;
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    background: var(--tk-red);
     display: flex;
     align-items: center;
     justify-content: center;
     font-size: 22px;
+    color: white;
     text-decoration: none;
-    box-shadow: 0 6px 16px rgba(0,0,0,.35);
-    transition: all .2s ease;
+    z-index: 2000;
+    box-shadow: 0 4px 10px rgba(0,0,0,.25);
+    transition: 0.25s ease;
 }
 
     .cart-btn:hover {
-        background: var(--tk-red);
         transform: translateY(-2px);
-        box-shadow: 0 10px 22px rgba(0,0,0,.45);
+        box-shadow: 0 6px 18px rgba(0,0,0,.35);
+        background: #a41010;
     }
 
+/* FIX: badge класът, който ползваш в Layout-а */
+.cart-count,
 .cart-count-badge {
     position: absolute;
-    top: -4px;
-    right: -4px;
-    min-width: 20px;
-    padding: 2px 5px;
-    border-radius: 999px;
-    background: var(--tk-red);
+    top: -6px;
+    right: -7px;
+    width: 22px;
+    height: 22px;
+    font-size: 12px;
+    background: #000;
     color: #fff;
-    font-size: 0.7rem;
-    font-weight: 800;
-    text-align: center;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
+/* ===== Cart page ===== */
+.cart-page {
+    max-width: 1000px;
+}
+
+.cart-table {
+    background: #fff;
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: 0 8px 20px rgba(0,0,0,.08);
+}
+
+    .cart-table th,
+    .cart-table td {
+        vertical-align: middle;
+    }
+
+    .cart-table thead th {
+        border-bottom-width: 2px;
+    }
+
+.cart-page h2 {
+    letter-spacing: 0.5px;
+}
+
+.cart-actions-row .btn {
+    min-width: 180px;
+}
+
+/* ===== Gallery cards ===== */
+.gallery-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background: #fff;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.08);
+    transition: transform .2s;
+    padding-bottom: 10px;
+}
+
+    .gallery-card:hover {
+        transform: scale(1.02);
+    }
+
+.gallery-img {
+    width: 100%;
+    height: 220px;
+    object-fit: cover;
+    border-bottom: 1px solid #ddd;
+}
+
+.gallery-info {
+    padding: 10px;
+}
+
+.gallery-actions .btn {
+    font-size: 14px;
+    padding: 4px 8px;
+}

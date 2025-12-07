@@ -7,11 +7,15 @@ namespace TKGroopBG.Models
         public int Id { get; set; }
 
         [Required]
-        [MaxLength(150)]
-        public string Title { get; set; }
+        [StringLength(100)]
+        public string? Title { get; set; }
 
-        [MaxLength(300)]
+        [StringLength(1000)]
         public string? Description { get; set; }
+
+        // НОВО – запазваме името на файла
+        [StringLength(260)]
+        public string? ImageFileName { get; set; }
     }
 }
 

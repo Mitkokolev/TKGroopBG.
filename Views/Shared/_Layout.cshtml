@@ -28,6 +28,12 @@
         <span class="visually-hidden">Начало</span>
     </a>
 
+    <!-- 🛒 Cart Button (вляво от auth) -->
+    <a asp-controller="Cart" asp-action="Index" class="cart-btn" title="Количка">
+        <i class="fas fa-shopping-cart"></i>
+        <span id="cart-count" class="cart-count-badge">0</span>
+    </a>
+
     <!-- Auth Buttons -->
     <div class="auth-bar">
         @if (SignInManager.IsSignedIn(User))
@@ -50,12 +56,6 @@
             <a class="btn-auth btn-auth-danger" asp-area="Identity" asp-page="/Account/Register">Регистрация</a>
         }
     </div>
-
-    <!-- 🛒 Cart Button -->
-    <a asp-controller="Cart" asp-action="Index" class="cart-btn" title="Количка">
-        <i class="fas fa-shopping-cart"></i>
-        <span id="cart-count" class="cart-count-badge">0</span>
-    </a>
 
     <!-- Content -->
     <main class="tk-main">
@@ -92,7 +92,7 @@
     @await RenderSectionAsync("Scripts", required: false)
 
     <script>
-        // глобална функция – ще я ползваме и в Cart
+        // глобална функция – показва броя продукти в количката
         function updateCartCount() {
             let count = 0;
             try {
@@ -113,6 +113,11 @@
             }
         }
 
+        // alias, за да работят стари викове като updateCartBadge()
+        function updateCartBadge() {
+            updateCartCount();
+        }
+
         // при зареждане
         document.addEventListener("DOMContentLoaded", updateCartCount);
 
@@ -125,6 +130,8 @@
     </script>
 </body>
 </html>
+
+
 
 
 

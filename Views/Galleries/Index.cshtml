@@ -4,12 +4,13 @@
     ViewData["Title"] = "Галерия";
     Layout = "~/Views/Shared/_Layout.cshtml";
 
-    // (optional) will show in your top admin bar if you render _AdminBar in _Layout
+    // казваме на _AdminBar какъв бутон да сложи
     if (User.IsInRole("Admin"))
     {
         ViewBag.AdminButtons = @"
-            <a class='btn btn-outline-danger' href='/Galleries/Create'>+ Добави снимка</a>
-        ";
+            <a class='btn btn-outline-danger' href='/Galleries/Create'>
+                + Добави снимка
+            </a>";
     }
 }
 
@@ -17,41 +18,52 @@
     <h2 class="text-danger fw-bold mb-2">Галерия</h2>
     <p class="text-muted mb-4">Реализирани обекти и примери от нашата работа.</p>
 
+    <!-- ТУК ВЕЧЕ НЕ ВИКАМЕ _AdminBar -->
+    @* @await Html.PartialAsync("_AdminBar") *@
+
     <div class="products-grid" style="grid-template-columns: repeat(4, 1fr);">
         @foreach (var item in Model)
         {
-            // Име на файла: Title -> Title_with_underscores.jpg
-            var imageName = $"{(item.Title ?? string.Empty).Replace(" ", "_")}.jpg";
-            var imagePath = Url.Content($"~/gallery/{imageName}");
-            var fallback = Url.Content("~/images/default.jpg");
+            var imagePath = string.IsNullOrEmpty(item.ImageFileName)
+            ? Url.Content("~/images/default.jpg")
+            : Url.Content("~/gallery-images/" + item.ImageFileName);
 
-            <div class="product-card">
-                <img src="@imagePath"
-                     alt="@item.Title"
-                     class="product-img"
-                     onerror="this.onerror=null; this.src='@fallback';" />
+            <div class="gallery-card">
+                <a asp-action="Details"
+                   asp-route-id="@item.Id"
+                   class="gallery-clickable">
 
-                <div class="product-info">
-                    <h3>@item.Title</h3>
+                    <img src="@imagePath"
+                         alt="@item.Title"
+                         class="gallery-img" />
+                </a>
+
+                <div class="gallery-info">
+                    <h4>@item.Title</h4>
 
                     @if (!string.IsNullOrWhiteSpace(item.Description))
                     {
-                        <p>@item.Description</p>
+                        <p class="text-muted small">@item.Description</p>
                     }
-
-                    <div class="product-actions mt-2">
-                        <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-outline-dark">Детайли</a>
-
-                        @if (User.IsInRole("Admin"))
-                        {
-                            <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-outline-secondary">Редактирай</a>
-                            <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-sm btn-outline-danger">Изтрий</a>
-                        }
-                    </div>
                 </div>
+
+                @if (User.IsInRole("Admin"))
+                {
+                    <div class="gallery-actions d-flex justify-content-center gap-1 mt-2">
+                        <a asp-action="Edit"
+                           asp-route-id="@item.Id"
+                           class="btn btn-sm btn-outline-secondary">
+                            ✏ Редактирай
+                        </a>
+
+                        <a asp-action="Delete"
+                           asp-route-id="@item.Id"
+                           class="btn btn-sm btn-outline-danger">
+                            🗑 Изтрий
+                        </a>
+                    </div>
+                }
             </div>
         }
     </div>
 </div>
-
-

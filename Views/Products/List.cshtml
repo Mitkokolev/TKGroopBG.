@@ -27,13 +27,15 @@
             ? fallback
             : Url.Content("~/product-images/" + item.ImageFileName);
 
+            <!-- цялата карта води към Details -->
             <a asp-action="Details"
                asp-route-id="@item.Id"
                class="product-card product-clickable">
 
                 <img src="@imagePath"
                      alt="@item.Name"
-                     class="product-img" />
+                     class="product-img"
+                     onerror="this.src='@fallback'" />
 
                 <div class="product-info">
                     <h3>@item.Name</h3>
@@ -51,7 +53,25 @@
                     }
                 </div>
             </a>
+
+            @if (User.IsInRole("Admin"))
+            {
+                <div class="product-actions mt-2 d-flex gap-1 justify-content-center">
+                    <a asp-action="Edit"
+                       asp-route-id="@item.Id"
+                       class="btn btn-sm btn-outline-secondary">
+                         Редактирай
+                    </a>
+
+                    <a asp-action="Delete"
+                       asp-route-id="@item.Id"
+                       class="btn btn-sm btn-outline-danger">
+                         Изтрий
+                    </a>
+                </div>
+            }
         }
+
     </div>
 </div>
 

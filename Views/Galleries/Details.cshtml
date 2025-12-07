@@ -1,30 +1,37 @@
 ﻿@model TKGroopBG.Models.Gallery
 
 @{
-    ViewData["Title"] = "Details";
+    ViewData["Title"] = Model.Title;
+    Layout = "~/Views/Shared/_Layout.cshtml";
+
+    var imagePath = string.IsNullOrEmpty(Model.ImageFileName)
+        ? Url.Content("~/images/default.jpg")
+        : Url.Content("~/gallery-images/" + Model.ImageFileName);
 }
 
-<h1>Details</h1>
+<div class="container mt-5">
+    <div class="row gx-4 gy-4">
+        <div class="col-lg-8">
+            <div class="product-main-image-box">
+                <img src="@imagePath"
+                     alt="@Model.Title"
+                     class="product-main-image" />
+            </div>
+        </div>
 
-<div>
-    <h4>Gallery</h4>
-    <hr />
-    <dl class="row">
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Title)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Title)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Description)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Description)
-        </dd>
-    </dl>
-</div>
-<div>
-    <a asp-action="Edit" asp-route-id="@Model?.Id">Edit</a> |
-    <a asp-action="Index">Back to List</a>
+        <div class="col-lg-4">
+            <div class="product-info-card">
+                <h2 class="text-danger fw-bold mb-2">@Model.Title</h2>
+
+                @if (!string.IsNullOrWhiteSpace(Model.Description))
+                {
+                    <p class="text-muted">@Model.Description</p>
+                }
+
+                <a asp-action="Index" class="btn btn-outline-secondary mt-3">
+                    ← Обратно към галерията
+                </a>
+            </div>
+        </div>
+    </div>
 </div>

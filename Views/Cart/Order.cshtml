@@ -1,0 +1,78 @@
+﻿@model TKGroopBG.Models.OrderRequest
+
+@{
+    ViewData["Title"] = "Заявка / Поръчка";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container mt-5">
+    <h2 class="text-danger fw-bold mb-3">Заявка / Поръчка</h2>
+    <p class="text-muted">
+        Попълни данните си, а количката ще се приложи автоматично.
+    </p>
+    <hr />
+
+    <div class="row">
+        <div class="col-md-6">
+            <form asp-action="SubmitOrder" asp-controller="Cart" method="post">
+                @Html.AntiForgeryToken()
+
+                <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+                <div class="mb-3">
+                    <label asp-for="CustomerName" class="form-label"></label>
+                    <input asp-for="CustomerName" class="form-control" />
+                    <span asp-validation-for="CustomerName" class="text-danger"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="Phone" class="form-label"></label>
+                    <input asp-for="Phone" class="form-control" />
+                    <span asp-validation-for="Phone" class="text-danger"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="Email" class="form-label"></label>
+                    <input asp-for="Email" class="form-control" />
+                    <span asp-validation-for="Email" class="text-danger"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="Address" class="form-label"></label>
+                    <input asp-for="Address" class="form-control" />
+                    <span asp-validation-for="Address" class="text-danger"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="Comment" class="form-label"></label>
+                    <textarea asp-for="Comment" class="form-control" rows="3"></textarea>
+                    <span asp-validation-for="Comment" class="text-danger"></span>
+                </div>
+
+                <!-- скрито поле за количката (JSON от localStorage) -->
+                <input type="hidden" asp-for="CartJson" />
+
+                <button type="submit" class="btn btn-danger">Изпрати заявката</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+
+    <script>
+        // при отваряне на страницата слагаме tk_cart от localStorage в CartJson
+        document.addEventListener("DOMContentLoaded", function () {
+            try {
+                const raw = localStorage.getItem("tk_cart") || "";
+                const input = document.querySelector("input[name='CartJson']");
+                if (input) {
+                    input.value = raw;
+                }
+            } catch { }
+        });
+    </script>
+}

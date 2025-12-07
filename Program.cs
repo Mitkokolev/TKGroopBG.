@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using TKGroopBG.Data;
+using TKGroopBG.Models;
+using TKGroopBG.Services;
 
 namespace TKGroopBG
 {
@@ -10,6 +12,7 @@ namespace TKGroopBG
         {
             var builder = WebApplication.CreateBuilder(args);
 
+            // ========== DATABASE ==========
             var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
                 ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
 
@@ -18,18 +21,32 @@ namespace TKGroopBG
 
             builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
+
+            // ========== AUTH + ROLES ==========
             builder.Services
                 .AddDefaultIdentity<IdentityUser>(options =>
                 {
                     options.SignIn.RequireConfirmedAccount = true;
                 })
-                .AddRoles<IdentityRole>()                              
+                .AddRoles<IdentityRole>()
                 .AddEntityFrameworkStores<ApplicationDbContext>();
 
             builder.Services.AddControllersWithViews();
 
+
+            // ========== SMTP CONFIG ==========
+            builder.Services.Configure<SmtpSettings>(
+                builder.Configuration.GetSection("Smtp"));
+
+            builder.Services.AddTransient<IEmailService, EmailService>();
+
+
+
             var app = builder.Build();
 
+
+
+            // ========== ADMIN AUTO-CREATE ==========
             using (var scope = app.Services.CreateScope())
             {
                 var services = scope.ServiceProvider;
@@ -44,7 +61,7 @@ namespace TKGroopBG
                 {
                     await roleManager.CreateAsync(new IdentityRole(adminRole));
                 }
-  
+
                 var admin = await userManager.FindByEmailAsync(adminEmail);
                 if (admin == null)
                 {
@@ -67,7 +84,10 @@ namespace TKGroopBG
                         await userManager.AddToRoleAsync(admin, adminRole);
                 }
             }
-            
+
+
+
+            // ========== MIDDLEWARE PIPELINE ==========
             if (app.Environment.IsDevelopment())
             {
                 app.UseMigrationsEndPoint();
@@ -83,7 +103,7 @@ namespace TKGroopBG
 
             app.UseRouting();
 
-            app.UseAuthentication();   
+            app.UseAuthentication();
             app.UseAuthorization();
 
             app.MapControllerRoute(
@@ -96,4 +116,3 @@ namespace TKGroopBG
         }
     }
 }
-

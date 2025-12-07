@@ -1,39 +1,56 @@
 ﻿@model TKGroopBG.Models.Gallery
 
 @{
-    ViewData["Title"] = "Edit";
+    ViewData["Title"] = "Редакция";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+
+    var imagePath = string.IsNullOrEmpty(Model.ImageFileName)
+        ? Url.Content("~/images/default.jpg")
+        : Url.Content("~/gallery-images/" + Model.ImageFileName);
 }
 
-<h1>Edit</h1>
+<div class="container mt-5">
+    <h2 class="text-danger fw-bold mb-3">Редакция на снимка</h2>
+    <hr />
 
-<h4>Gallery</h4>
-<hr />
-<div class="row">
-    <div class="col-md-4">
-        <form asp-action="Edit">
-            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-            <input type="hidden" asp-for="Id" />
-            <div class="form-group">
-                <label asp-for="Title" class="control-label"></label>
-                <input asp-for="Title" class="form-control" />
-                <span asp-validation-for="Title" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="Description" class="control-label"></label>
-                <input asp-for="Description" class="form-control" />
-                <span asp-validation-for="Description" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <input type="submit" value="Save" class="btn btn-primary" />
-            </div>
-        </form>
+    <div class="row">
+        <div class="col-md-6">
+            <form asp-action="Edit" enctype="multipart/form-data">
+                <input type="hidden" asp-for="Id" />
+                <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+                <div class="mb-3">
+                    <label asp-for="Title" class="form-label">Заглавие</label>
+                    <input asp-for="Title" class="form-control" />
+                    <span asp-validation-for="Title" class="text-danger"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="Description" class="form-label">Описание</label>
+                    <textarea asp-for="Description" class="form-control" rows="3"></textarea>
+                    <span asp-validation-for="Description" class="text-danger"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Текуща снимка</label><br />
+                    <img src="@imagePath" alt="@Model.Title" style="max-width: 100%; border-radius: 10px;" />
+                </div>
+
+                <div class="mb-4">
+                    <label class="form-label">Нова снимка (по желание)</label>
+                    <input type="file" name="imageFile" class="form-control" accept="image/*" />
+                </div>
+
+                <button type="submit" class="btn btn-danger">Запази</button>
+                <a asp-action="Index" class="btn btn-outline-secondary ms-2">Назад</a>
+            </form>
+        </div>
     </div>
 </div>
 
-<div>
-    <a asp-action="Index">Back to List</a>
-</div>
-
 @section Scripts {
-    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
 }
+
