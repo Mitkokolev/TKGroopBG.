@@ -51,6 +51,12 @@
         }
     </div>
 
+    <!-- 🛒 Cart Button -->
+    <a asp-controller="Cart" asp-action="Index" class="cart-btn" title="Количка">
+        <i class="fas fa-shopping-cart"></i>
+        <span id="cart-count" class="cart-count-badge">0</span>
+    </a>
+
     <!-- Content -->
     <main class="tk-main">
         <partial name="_AdminBar" />
@@ -84,6 +90,39 @@
 
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     @await RenderSectionAsync("Scripts", required: false)
+
+    <script>
+        // глобална функция – ще я ползваме и в Cart
+        function updateCartCount() {
+            let count = 0;
+            try {
+                const raw = localStorage.getItem("tk_cart");
+                if (raw) {
+                    const arr = JSON.parse(raw);
+                    if (Array.isArray(arr)) {
+                        count = arr.length;
+                    }
+                }
+            } catch (e) {
+                count = 0;
+            }
+
+            const badge = document.getElementById("cart-count");
+            if (badge) {
+                badge.textContent = count;
+            }
+        }
+
+        // при зареждане
+        document.addEventListener("DOMContentLoaded", updateCartCount);
+
+        // ако друг таб промени количката
+        window.addEventListener("storage", function (e) {
+            if (e.key === "tk_cart") {
+                updateCartCount();
+            }
+        });
+    </script>
 </body>
 </html>
 

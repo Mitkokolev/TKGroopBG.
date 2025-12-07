@@ -1,8 +1,12 @@
-﻿using System.Linq;
+﻿using System;
+using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using TKGroopBG.Data;
 using TKGroopBG.Models;
@@ -12,6 +16,7 @@ namespace TKGroopBG.Controllers
     public class ProductsController : Controller
     {
         private readonly ApplicationDbContext _context;
+        private readonly IWebHostEnvironment _env;
 
         // ТУК си държим категориите и ги ползваме навсякъде
         private static readonly string[] Categories = new[]
@@ -23,9 +28,31 @@ namespace TKGroopBG.Controllers
             "Мрежи против насекоми"
         };
 
-        public ProductsController(ApplicationDbContext context)
+        public ProductsController(ApplicationDbContext context, IWebHostEnvironment env)
         {
             _context = context;
+            _env = env;
+        }
+
+        // ================== помощен метод за снимката ==================
+
+        private async Task<string?> SaveImageAsync(IFormFile? imageFile)
+        {
+            if (imageFile == null || imageFile.Length == 0)
+                return null;
+
+            var uploadsFolder = Path.Combine(_env.WebRootPath, "product-images");
+            Directory.CreateDirectory(uploadsFolder);
+
+            var fileName = Guid.NewGuid().ToString() + Path.GetExtension(imageFile.FileName);
+            var filePath = Path.Combine(uploadsFolder, fileName);
+
+            using (var stream = new FileStream(filePath, FileMode.Create))
+            {
+                await imageFile.CopyToAsync(stream);
+            }
+
+            return fileName;
         }
 
         // ================== КАТЕГОРИИ ==================
@@ -76,23 +103,35 @@ namespace TKGroopBG.Controllers
         // ================== CREATE (Admin) ==================
 
         [Authorize(Roles = "Admin")]
-        public IActionResult Create()
+        public IActionResult Create(string? category)
         {
-            // ТУК вече подаваме реален масив, не null
             ViewBag.Categories = Categories;
-            return View();
+
+            // ако идваш от "Добави продукт в {category}" – попълваме Category
+            var model = new Products
+            {
+                Category = category
+            };
+
+            return View(model);
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
         [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> Create([Bind("Id,Name,Description,Price,Category")] Products products)
+        public async Task<IActionResult> Create(Products products, IFormFile? imageFile)
         {
             if (!ModelState.IsValid)
             {
-                // при грешки пак подаваме категориите към ViewBag
                 ViewBag.Categories = Categories;
                 return View(products);
+            }
+
+            // качваме снимката, ако има
+            var fileName = await SaveImageAsync(imageFile);
+            if (fileName != null)
+            {
+                products.ImageFileName = fileName;
             }
 
             _context.Add(products);
@@ -110,7 +149,6 @@ namespace TKGroopBG.Controllers
             var products = await _context.Products.FindAsync(id);
             if (products == null) return NotFound();
 
-            // ако Edit view-то ти има dropdown за Category – подаваме отново
             ViewBag.Categories = Categories;
             return View(products);
         }
@@ -118,7 +156,7 @@ namespace TKGroopBG.Controllers
         [HttpPost]
         [ValidateAntiForgeryToken]
         [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> Edit(int id, [Bind("Id,Name,Description,Price,Category")] Products products)
+        public async Task<IActionResult> Edit(int id, Products products, IFormFile? imageFile)
         {
             if (id != products.Id) return NotFound();
 
@@ -126,6 +164,24 @@ namespace TKGroopBG.Controllers
             {
                 ViewBag.Categories = Categories;
                 return View(products);
+            }
+
+            var existing = await _context.Products
+                .AsNoTracking()
+                .FirstOrDefaultAsync(p => p.Id == id);
+
+            if (existing == null) return NotFound();
+
+            // ако качим нова снимка – сменяме я
+            var fileName = await SaveImageAsync(imageFile);
+            if (fileName != null)
+            {
+                products.ImageFileName = fileName;
+            }
+            else
+            {
+                // запазваме старата
+                products.ImageFileName = existing.ImageFileName;
             }
 
             try

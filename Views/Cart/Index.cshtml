@@ -1,0 +1,127 @@
+﻿namespace TKGroopBG.Views.Cart
+{
+    public class Index
+    {
+@{
+    ViewData["Title"] = "Количка";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container mt-5">
+    <h2 class="text-danger fw-bold mb-3">Количка</h2>
+    <p class="text-muted">Тук виждаш избраните продукти, размери и ориентировъчна цена.</p>
+
+    <div id="cart-empty" class="alert alert-light mt-3">
+        Количката е празна.
+    </div>
+
+    <div id="cart-container" class="mt-3" style="display:none;">
+        <div class="table-responsive">
+            <table class="table align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>#</th>
+                        <th>Продукт</th>
+                        <th>Цвят</th>
+                        <th>Размери (мм)</th>
+                        <th>Площ</th>
+                        <th>Цена</th>
+                    </tr>
+                </thead>
+                <tbody id="cart-rows"></tbody>
+            </table>
+        </div>
+
+        <div class="d-flex justify-content-end mt-3">
+            <h5>Общо: <span id="cart-total">0.00 лв.</span></h5>
+        </div>
+    </div>
+
+    <div class="mt-4 d-flex gap-2">
+        <a asp-controller="Products" asp-action="Index" class="btn btn-outline-secondary">
+            ← Обратно към продуктите
+        </a>
+        <button id="cart-clear" class="btn btn-outline-danger">
+            Изчисти количката
+        </button>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function loadCart() {
+            let items = [];
+            try {
+                const raw = localStorage.getItem("tk_cart");
+                if (raw) {
+                    const parsed = JSON.parse(raw);
+                    if (Array.isArray(parsed)) {
+                        items = parsed;
+                    }
+                }
+            } catch (e) {
+                items = [];
+            }
+
+            const empty = document.getElementById('cart-empty');
+            const cont = document.getElementById('cart-container');
+            const tbody = document.getElementById('cart-rows');
+            const totalSpan = document.getElementById('cart-total');
+
+            tbody.innerHTML = '';
+            let total = 0;
+
+            if (items.length === 0) {
+                empty.style.display = 'block';
+                cont.style.display = 'none';
+                totalSpan.textContent = "0.00 лв.";
+                return;
+            }
+
+            empty.style.display = 'none';
+            cont.style.display = 'block';
+
+            items.forEach((it, idx) => {
+                const tr = document.createElement('tr');
+
+                const height = it.heightMm || 0;
+                const width = it.widthMm || 0;
+                const sizeText = (height && width) ? `${width} x ${height}` : "";
+                const area = Number(it.areaM2 || 0);
+                const totalPrice = Number(it.totalPrice || 0);
+
+                total += totalPrice;
+
+                tr.innerHTML = `
+                    <td>${idx + 1}</td>
+                    <td>${it.name || ""}</td>
+                    <td>${it.variantColor || ""}</td>
+                    <td>${sizeText}</td>
+                    <td>${area.toFixed(3)} м²</td>
+                    <td>${totalPrice.toFixed(2)} лв.</td>
+                `;
+
+                tbody.appendChild(tr);
+            });
+
+            totalSpan.textContent = total.toFixed(2) + " лв.";
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            loadCart();
+        });
+
+        document.getElementById('cart-clear').addEventListener('click', function () {
+            if (confirm("Сигурен ли си, че искаш да изчистиш количката?")) {
+                localStorage.removeItem("tk_cart");
+                loadCart();
+                if (typeof updateCartCount === "function") {
+                    updateCartCount();
+                }
+            }
+        });
+    </script>
+}
+
+    }
+}

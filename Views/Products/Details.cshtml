@@ -1,42 +1,212 @@
 ﻿@model TKGroopBG.Models.Products
+@using System.Text.Json
 
 @{
-    ViewData["Title"] = "Details";
+    ViewData["Title"] = Model.Name;
+    Layout = "~/Views/Shared/_Layout.cshtml";
+
+    var fallback = Url.Content("~/images/default.jpg");
+    var imagePath = string.IsNullOrEmpty(Model.ImageFileName)
+        ? fallback
+        : Url.Content("~/product-images/" + Model.ImageFileName);
+
+    // ще вкараме чисти JS данни през JSON
+    var productJson = JsonSerializer.Serialize(new
+    {
+        id = Model.Id,
+        name = Model.Name,
+        price = Model.Price,
+        category = Model.Category
+    });
 }
 
-<h1>Details</h1>
+<div class="container mt-5 product-details-page">
+    <div class="row gx-4 gy-4">
 
-<div>
-    <h4>Products</h4>
-    <hr />
-    <dl class="row">
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Name)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Name)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Description)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Description)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Price)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Price)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Category)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Category)
-        </dd>
-    </dl>
+        <!-- Лява част: голяма снимка + варианти -->
+        <div class="col-lg-8">
+            <div class="product-main-image-box">
+                <img id="mainProductImage"
+                     src="@imagePath"
+                     alt="@Model.Name"
+                     class="product-main-image" />
+            </div>
+
+            <div class="product-variants">
+                <!-- Засега всички варианти сочат към една и съща снимка -->
+                <button type="button"
+                        class="variant-circle active"
+                        data-image="@imagePath"
+                        data-color="Бял"
+                        title="Бял">
+                </button>
+                <button type="button"
+                        class="variant-circle variant-dark"
+                        data-image="@imagePath"
+                        data-color="Антрацит"
+                        title="Антрацит">
+                </button>
+                <button type="button"
+                        class="variant-circle variant-brown"
+                        data-image="@imagePath"
+                        data-color="Кафяв"
+                        title="Кафяв">
+                </button>
+            </div>
+
+            <div class="product-size-inputs mt-4">
+                <div class="size-box">
+                    <label for="heightMm" class="form-label">Размер по височина (мм)</label>
+                    <input id="heightMm" type="number" class="form-control"
+                           placeholder="напр. 1200" min="1" />
+                </div>
+                <div class="size-box">
+                    <label for="widthMm" class="form-label">Размер по ширина (мм)</label>
+                    <input id="widthMm" type="number" class="form-control"
+                           placeholder="напр. 800" min="1" />
+                </div>
+            </div>
+        </div>
+
+        <!-- Дясна част: инфо + цена + бутон -->
+        <div class="col-lg-4">
+            <div class="product-info-card">
+                <h2 class="text-danger fw-bold mb-2">@Model.Name</h2>
+
+                @if (!string.IsNullOrWhiteSpace(Model.Description))
+                {
+                    <p class="text-muted">@Model.Description</p>
+                }
+
+                @if (!string.IsNullOrWhiteSpace(Model.Category))
+                {
+                    <p class="small text-secondary mb-2">
+                        Категория: <strong>@Model.Category</strong>
+                    </p>
+                }
+
+                <hr />
+
+                <div class="product-price-box">
+                    <p class="mb-1 small text-muted">
+                        Базова цена (на м² / ориентировъчна):
+                    </p>
+                    <p class="h5 text-danger fw-bold mb-3">
+                        @Model.Price.ToString("0.00") лв.
+                    </p>
+
+                    <p class="mb-1 small text-muted">
+                        Цена според въведените размери:
+                    </p>
+                    <p id="calcPrice" class="h4 fw-bold">
+                        – лв.
+                    </p>
+                </div>
+
+                <button id="addToCartBtn" class="btn btn-danger w-100 mt-3">
+                    Добави в количката
+                </button>
+            </div>
+        </div>
+
+    </div>
 </div>
-<div>
-    <a asp-action="Edit" asp-route-id="@Model?.Id">Edit</a> |
-    <a asp-action="Index">Back to List</a>
-</div>
+
+@section Scripts {
+    <script>
+        // Данни за продукта от сървъра (Id, име, базова цена и т.н.)
+        const product = @Html.Raw(@productJson);
+
+        // текущо избран цвят
+        let selectedColor = "Бял";
+
+        // смяна на варианта (цвят / вариант)
+        document.querySelectorAll('.variant-circle').forEach(btn => {
+            btn.addEventListener('click', function () {
+                document
+                    .querySelectorAll('.variant-circle')
+                    .forEach(b => b.classList.remove('active'));
+
+                this.classList.add('active');
+
+                const img = this.getAttribute('data-image');
+                const color = this.getAttribute('data-color');
+
+                if (img) {
+                    document.getElementById('mainProductImage').src = img;
+                }
+                if (color) {
+                    selectedColor = color;
+                }
+            });
+        });
+
+        // калкулатор: приемаме, че product.price е цена за 1 м²
+        const basePrice = product.price;
+
+        const heightInput = document.getElementById('heightMm');
+        const widthInput = document.getElementById('widthMm');
+        const priceOutput = document.getElementById('calcPrice');
+
+        function recalcPrice() {
+            const h = parseFloat(heightInput.value);
+            const w = parseFloat(widthInput.value);
+
+            if (!isNaN(h) && !isNaN(w) && h > 0 && w > 0) {
+                const areaM2 = (h / 1000.0) * (w / 1000.0); // мм -> м
+                const price = basePrice * areaM2;
+                priceOutput.textContent = price.toFixed(2) + " лв.";
+            } else {
+                priceOutput.textContent = "– лв.";
+            }
+        }
+
+        heightInput.addEventListener('input', recalcPrice);
+        widthInput.addEventListener('input', recalcPrice);
+
+        // Добавяне в количката (localStorage)
+        document.getElementById('addToCartBtn').addEventListener('click', function () {
+            const h = parseFloat(heightInput.value);
+            const w = parseFloat(widthInput.value);
+
+            if (isNaN(h) || isNaN(w) || h <= 0 || w <= 0) {
+                alert("Моля, въведи коректни размери (в мм).");
+                return;
+            }
+
+            const areaM2 = (h / 1000.0) * (w / 1000.0);
+            const totalPrice = basePrice * areaM2;
+
+            // четем текущата количка
+            let cart = [];
+            try {
+                const raw = localStorage.getItem("tk_cart");
+                if (raw) cart = JSON.parse(raw);
+            } catch (e) {
+                cart = [];
+            }
+
+            // правим запис
+            const cartItem = {
+                productId: product.id,
+                name: product.name,
+                category: product.category,
+                basePrice: basePrice,
+                heightMm: h,
+                widthMm: w,
+                areaM2: areaM2,
+                variantColor: selectedColor,
+                totalPrice: Number(totalPrice.toFixed(2)),
+                createdAt: new Date().toISOString()
+            };
+
+            cart.push(cartItem);
+            localStorage.setItem("tk_cart", JSON.stringify(cart));
+
+            alert("Продуктът е добавен в количката.");
+        });
+    </script>
+}
+
+
+

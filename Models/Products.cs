@@ -6,18 +6,15 @@ namespace TKGroopBG.Models
     {
         public int Id { get; set; }
 
-        [Required]
-        [MaxLength(200)]
-        public string Name { get; set; }
+        public string Name { get; set; } = null!;
 
-        [MaxLength(500)]
         public string? Description { get; set; }
 
         public decimal Price { get; set; }
 
-        [Required]
-        [MaxLength(200)]
-        public string Category { get; set; } 
+        public string? Category { get; set; }
+
+        public string? ImageFileName { get; set; }
     }
 }
 

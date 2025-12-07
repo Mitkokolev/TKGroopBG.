@@ -1,8 +1,7 @@
 ﻿@model TKGroopBG.Models.Products
-@using Microsoft.AspNetCore.Mvc.Rendering
 
 @{
-    ViewData["Title"] = "Редакция на продукт";
+    ViewData["Title"] = "Редакция";
 }
 
 <h2 class="text-danger fw-bold mb-3">Редакция на продукт</h2>
@@ -10,37 +9,45 @@
 
 <div class="row">
     <div class="col-md-6">
-        <form asp-action="Edit">
+        <form asp-action="Edit" enctype="multipart/form-data">
             <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
-
             <input type="hidden" asp-for="Id" />
 
             <div class="form-group mb-3">
-                <label asp-for="Name" class="control-label">Име на продукт</label>
+                <label asp-for="Name" class="control-label"></label>
                 <input asp-for="Name" class="form-control" />
                 <span asp-validation-for="Name" class="text-danger"></span>
             </div>
 
             <div class="form-group mb-3">
-                <label asp-for="Description" class="control-label">Описание</label>
+                <label asp-for="Description" class="control-label"></label>
                 <input asp-for="Description" class="form-control" />
                 <span asp-validation-for="Description" class="text-danger"></span>
             </div>
 
             <div class="form-group mb-3">
-                <label asp-for="Price" class="control-label">Цена (лв.)</label>
+                <label asp-for="Price" class="control-label"></label>
                 <input asp-for="Price" class="form-control" />
                 <span asp-validation-for="Price" class="text-danger"></span>
             </div>
 
-            <div class="form-group mb-4">
-                <label class="control-label">Категория</label>
-                <select asp-for="Category"
-                        class="form-control"
-                        asp-items="@(new SelectList(ViewBag.Categories))">
-                    <option value="">-- избери категория --</option>
-                </select>
+            <div class="form-group mb-3">
+                <label asp-for="Category" class="control-label"></label>
+                <input asp-for="Category" class="form-control" />
                 <span asp-validation-for="Category" class="text-danger"></span>
+            </div>
+
+            @if (!string.IsNullOrEmpty(Model.ImageFileName))
+            {
+                <div class="mb-3">
+                    <label>Текуща снимка:</label><br />
+                    <img src="~/product-images/@Model.ImageFileName" style="max-width:200px;" />
+                </div>
+            }
+
+            <div class="form-group mb-4">
+                <label class="control-label">Нова снимка (по избор)</label>
+                <input type="file" name="imageFile" class="form-control" />
             </div>
 
             <div class="form-group">

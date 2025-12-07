@@ -1,31 +1,27 @@
 ﻿@model IEnumerable<string>
-
 @{
     ViewData["Title"] = "Продукти";
     Layout = "~/Views/Shared/_Layout.cshtml";
-
-    if (User.IsInRole("Admin"))
-    {
-        ViewBag.AdminButtons = @"
-            <a class='btn btn-outline-danger' href='/Products/Create'>
-                + Добави нов продукт
-            </a>";
-    }
 }
 
-<div class="container mt-5 text-center">
-    <h2 class="text-danger fw-bold mb-2">Продуктови категории</h2>
-    <p class="text-muted mb-4">Изберете категория, за да видите продуктите.</p>
-
-    <div class="home-grid">
-        @foreach (var cat in Model)
+<div class="home-grid">
+    @foreach (var cat in Model)
+    {
+        var img = cat switch
         {
-            <a asp-action="Category" asp-route-id="@cat" class="menu-card">
-                <img src="~/images/default.jpg" class="card-img" alt="@cat" />
-                <div class="card-overlay">@cat</div>
-            </a>
-        }
-    </div>
+            "Алуминиеви изделия" => Url.Content("~/images/categories/aluminium.jpg"),
+            "PVC дограма" => Url.Content("~/images/categories/pvc.jpg"),
+            "Щори" => Url.Content("~/images/categories/blinds.jpg"),
+            "Врати" => Url.Content("~/images/categories/doors.jpg"),
+            "Мрежи против насекоми" => Url.Content("~/images/categories/nets.jpg"),
+            _ => Url.Content("~/images/default.jpg")
+        };
+
+        <a asp-action="Category" asp-route-id="@cat" class="menu-card fade-up">
+            <img src="@img" class="card-img" alt="@cat" />
+            <div class="card-overlay">@cat</div>
+        </a>
+    }
 </div>
 
 
