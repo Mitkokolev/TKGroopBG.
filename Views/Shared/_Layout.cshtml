@@ -28,6 +28,15 @@
         <span class="visually-hidden">Начало</span>
     </a>
 
+    <!-- Back Button (един екран назад) -->
+    <button type="button"
+            class="back-btn"
+            title="Назад"
+            onclick="history.back()">
+        <i class="fas fa-arrow-left" aria-hidden="true"></i>
+        <span class="visually-hidden">Назад</span>
+    </button>
+
     <!-- 🛒 Cart Button (вляво от auth) -->
     <a asp-controller="Cart" asp-action="Index" class="cart-btn" title="Количка">
         <i class="fas fa-shopping-cart"></i>
@@ -92,6 +101,13 @@
     @await RenderSectionAsync("Scripts", required: false)
 
     <script>
+        @if (ViewContext.RouteData.Values["Action"]?.ToString() != "Index")
+        {
+                <a href="javascript:history.back()" class="back-btn" title="Назад">
+                    <i class="fas fa-arrow-left"></i>
+                </a>
+        }
+
         // глобална функция – показва броя продукти в количката
         function updateCartCount() {
             let count = 0;
@@ -113,15 +129,12 @@
             }
         }
 
-        // alias, за да работят стари викове като updateCartBadge()
         function updateCartBadge() {
             updateCartCount();
         }
 
-        // при зареждане
         document.addEventListener("DOMContentLoaded", updateCartCount);
 
-        // ако друг таб промени количката
         window.addEventListener("storage", function (e) {
             if (e.key === "tk_cart") {
                 updateCartCount();
@@ -130,6 +143,7 @@
     </script>
 </body>
 </html>
+
 
 
 
