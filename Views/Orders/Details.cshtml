@@ -1,0 +1,23 @@
+﻿@model TKGroopBG.Models.Order
+@{
+    ViewData["Title"] = $"Заявка #{Model.Id}";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container mt-5">
+    <h2 class="text-danger fw-bold mb-3">Заявка #@Model.Id</h2>
+
+    <div class="bg-white p-3 rounded shadow-sm">
+        <p><strong>Име:</strong> @Model.CustomerName</p>
+        <p><strong>Телефон:</strong> @Model.Phone</p>
+        <p><strong>Email:</strong> @Model.Email</p>
+        <p><strong>Адрес:</strong> @Model.Address</p>
+        <p><strong>Коментар:</strong> @Model.Comment</p>
+        <hr />
+        <p class="mb-2"><strong>Количка (JSON):</strong></p>
+        <pre style="white-space:pre-wrap">@Model.CartJson</pre>
+    </div>
+
+    <a asp-action="Index" class="btn btn-outline-secondary mt-3">Назад</a>
+</div>
+

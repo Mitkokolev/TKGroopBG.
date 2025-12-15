@@ -1,78 +1,61 @@
 ﻿@model TKGroopBG.Models.OrderRequest
-
 @{
-    ViewData["Title"] = "Заявка / Поръчка";
+    ViewData["Title"] = "Заявка";
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
 
-<div class="container mt-5">
-    <h2 class="text-danger fw-bold mb-3">Заявка / Поръчка</h2>
-    <p class="text-muted">
-        Попълни данните си, а количката ще се приложи автоматично.
-    </p>
-    <hr />
+<div class="container mt-5 d-flex justify-content-center">
+    <div class="col-md-6">
+        <div class="product-info-card">
+            <h3 class="text-danger fw-bold mb-3 text-center">Заявка / Поръчка</h3>
+            <p class="text-muted text-center mb-4">
+                Попълни данните си – количката се прилага автоматично.
+            </p>
 
-    <div class="row">
-        <div class="col-md-6">
             <form asp-action="SubmitOrder" asp-controller="Cart" method="post">
                 @Html.AntiForgeryToken()
 
-                <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
-
                 <div class="mb-3">
-                    <label asp-for="CustomerName" class="form-label"></label>
-                    <input asp-for="CustomerName" class="form-control" />
-                    <span asp-validation-for="CustomerName" class="text-danger"></span>
+                    <label class="form-label">Име</label>
+                    <input asp-for="CustomerName" class="form-control" required />
                 </div>
 
                 <div class="mb-3">
-                    <label asp-for="Phone" class="form-label"></label>
-                    <input asp-for="Phone" class="form-control" />
-                    <span asp-validation-for="Phone" class="text-danger"></span>
+                    <label class="form-label">Телефон</label>
+                    <input asp-for="Phone" class="form-control" required />
                 </div>
 
                 <div class="mb-3">
-                    <label asp-for="Email" class="form-label"></label>
+                    <label class="form-label">Имейл</label>
                     <input asp-for="Email" class="form-control" />
-                    <span asp-validation-for="Email" class="text-danger"></span>
                 </div>
 
                 <div class="mb-3">
-                    <label asp-for="Address" class="form-label"></label>
+                    <label class="form-label">Адрес (по желание)</label>
                     <input asp-for="Address" class="form-control" />
-                    <span asp-validation-for="Address" class="text-danger"></span>
                 </div>
 
-                <div class="mb-3">
-                    <label asp-for="Comment" class="form-label"></label>
+                <div class="mb-4">
+                    <label class="form-label">Коментар</label>
                     <textarea asp-for="Comment" class="form-control" rows="3"></textarea>
-                    <span asp-validation-for="Comment" class="text-danger"></span>
                 </div>
 
-                <!-- скрито поле за количката (JSON от localStorage) -->
                 <input type="hidden" asp-for="CartJson" />
 
-                <button type="submit" class="btn btn-danger">Изпрати заявката</button>
+                <button type="submit" class="btn btn-danger w-100 btn-lg">
+                    Изпрати заявката
+                </button>
             </form>
         </div>
     </div>
 </div>
 
 @section Scripts {
-    @{
-        await Html.RenderPartialAsync("_ValidationScriptsPartial");
-    }
-
-    <script>
-        // при отваряне на страницата слагаме tk_cart от localStorage в CartJson
-        document.addEventListener("DOMContentLoaded", function () {
-            try {
-                const raw = localStorage.getItem("tk_cart") || "";
-                const input = document.querySelector("input[name='CartJson']");
-                if (input) {
-                    input.value = raw;
-                }
-            } catch { }
-        });
-    </script>
+<script>
+    document.addEventListener("DOMContentLoaded", () => {
+        document.querySelector("input[name='CartJson']").value =
+            localStorage.getItem("tk_cart") || "";
+    });
+</script>
 }
+

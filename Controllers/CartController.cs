@@ -2,47 +2,49 @@
 using Microsoft.AspNetCore.Mvc;
 using TKGroopBG.Models;
 using TKGroopBG.Services;
+using TKGroopBG.Data;
 
 namespace TKGroopBG.Controllers
 {
     public class CartController : Controller
     {
         private readonly IEmailService _emailService;
+        private readonly ApplicationDbContext _context;
 
-        public CartController(IEmailService emailService)
+        public CartController(IEmailService emailService, ApplicationDbContext context)
         {
             _emailService = emailService;
+            _context = context;
         }
 
-        // GET: /Cart
         [HttpGet]
-        public IActionResult Index()
-        {
-            // прост view – количката се рисува с JS от localStorage
-            return View();
-        }
+        public IActionResult Index() => View();
 
-        // GET: /Cart/Order
         [HttpGet]
-        public IActionResult Order()
-        {
-            return View(new OrderRequest());
-        }
+        public IActionResult Order() => View(new OrderRequest());
 
-        // POST: /Cart/SubmitOrder
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> SubmitOrder(OrderRequest model)
         {
             if (string.IsNullOrWhiteSpace(model.CartJson))
-            {
                 ModelState.AddModelError(string.Empty, "Количката е празна.");
-            }
 
             if (!ModelState.IsValid)
-            {
                 return View("Order", model);
-            }
+
+            var order = new Order
+            {
+                CustomerName = model.CustomerName,
+                Phone = model.Phone,
+                Email = model.Email,
+                Address = model.Address,
+                Comment = model.Comment,
+                CartJson = model.CartJson
+            };
+
+            _context.Orders.Add(order);
+            await _context.SaveChangesAsync();
 
             await _emailService.SendOrderEmailAsync(model);
 
@@ -51,5 +53,6 @@ namespace TKGroopBG.Controllers
         }
     }
 }
+
 
 
