@@ -7,12 +7,20 @@
         <div class="admin-bar">
             <span class="badge-admin">ADMIN</span>
 
-            @if (ViewBag.AdminButtons is string content && !string.IsNullOrWhiteSpace(content))
-            {
-                <div class="admin-actions">
-                    @Html.Raw(content)
-                </div>
-            }
+            <div class="admin-actions">
+                <a class="btn btn-outline-danger" href="/Products/Create">
+                    + Добави продукт
+                </a>
+
+                <a class="btn btn-outline-danger" href="/Galleries/Create">
+                    + Добави снимка
+                </a>
+
+                <a class="btn btn-outline-dark" href="/Orders">
+                    Заявки
+                </a>
+            </div>
         </div>
     </div>
 }
+
