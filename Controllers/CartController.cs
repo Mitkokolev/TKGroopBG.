@@ -10,48 +10,39 @@ namespace TKGroopBG.Controllers
     {
         private readonly ApplicationDbContext _context;
         private readonly IEmailService _emailService;
+        private readonly ApplicationDbContext _context;
 
-        public CartController(ApplicationDbContext context, IEmailService emailService)
+        public CartController(IEmailService emailService)
         {
             _context = context;
             _emailService = emailService;
+            _context = context;
         }
 
-        // GET: /Cart
         [HttpGet]
         public IActionResult Index()
         {
+            // прост view – количката се рисува с JS от localStorage
             return View();
         }
 
-        // GET: /Cart/Order
         [HttpGet]
-        public IActionResult Order()
-        {
-            return View(new OrderRequest());
-        }
+        public IActionResult Order() => View(new OrderRequest());
 
-        // POST: /Cart/SubmitOrder
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> SubmitOrder(OrderRequest model)
         {
             if (string.IsNullOrWhiteSpace(model.CartJson))
             {
-                ModelState.AddModelError("", "Количката е празна.");
+                ModelState.AddModelError(string.Empty, "Количката е празна.");
             }
 
             if (!ModelState.IsValid)
-            {
                 return View("Order", model);
-            }
 
-            // deserialize cart
-            var items = JsonSerializer.Deserialize<List<CartItemDto>>(model.CartJson);
-
-            if (items == null || !items.Any())
+            var order = new Order
             {
-                ModelState.AddModelError("", "Няма продукти.");
                 return View("Order", model);
             }
 
@@ -90,3 +81,5 @@ namespace TKGroopBG.Controllers
         }
     }
 }
+
+
