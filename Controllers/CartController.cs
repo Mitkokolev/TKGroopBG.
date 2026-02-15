@@ -1,16 +1,19 @@
-﻿using System.Threading.Tasks;
+﻿using System.Text.Json;
 using Microsoft.AspNetCore.Mvc;
 using TKGroopBG.Models;
 using TKGroopBG.Services;
+using TKGroopBG.Data;
 
 namespace TKGroopBG.Controllers
 {
     public class CartController : Controller
     {
+        private readonly ApplicationDbContext _context;
         private readonly IEmailService _emailService;
 
-        public CartController(IEmailService emailService)
+        public CartController(ApplicationDbContext context, IEmailService emailService)
         {
+            _context = context;
             _emailService = emailService;
         }
 
@@ -18,7 +21,6 @@ namespace TKGroopBG.Controllers
         [HttpGet]
         public IActionResult Index()
         {
-            // прост view – количката се рисува с JS от localStorage
             return View();
         }
 
@@ -36,7 +38,7 @@ namespace TKGroopBG.Controllers
         {
             if (string.IsNullOrWhiteSpace(model.CartJson))
             {
-                ModelState.AddModelError(string.Empty, "Количката е празна.");
+                ModelState.AddModelError("", "Количката е празна.");
             }
 
             if (!ModelState.IsValid)
@@ -44,12 +46,47 @@ namespace TKGroopBG.Controllers
                 return View("Order", model);
             }
 
+            // deserialize cart
+            var items = JsonSerializer.Deserialize<List<CartItemDto>>(model.CartJson);
+
+            if (items == null || !items.Any())
+            {
+                ModelState.AddModelError("", "Няма продукти.");
+                return View("Order", model);
+            }
+
+            // create order
+            var order = new Order
+            {
+                CustomerName = model.CustomerName,
+                Phone = model.Phone,
+                Email = model.Email,
+                Address = model.Address,
+                Comment = model.Comment,
+                CreatedAt = DateTime.Now
+            };
+
+            foreach (var item in items)
+            {
+                order.Items.Add(new OrderItem
+                {
+                    Name = item.name,
+                    Price = item.price,
+                    Quantity = item.qty,
+                    Image = item.image
+                });
+
+                order.TotalPrice += item.price * item.qty;
+            }
+
+            _context.Orders.Add(order);
+            await _context.SaveChangesAsync();
+
+            // email
             await _emailService.SendOrderEmailAsync(model);
 
-            TempData["OrderSuccess"] = "Заявката беше изпратена успешно.";
+            TempData["OrderSuccess"] = "Поръчката беше изпратена успешно.";
             return RedirectToAction("Index", "Home");
         }
     }
 }
-
-

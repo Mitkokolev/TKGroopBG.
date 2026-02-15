@@ -22,13 +22,11 @@
 </head>
 <body>
 
-    <!-- Home Button -->
     <a asp-controller="Home" asp-action="Index" class="home-btn" title="Начало">
         <i class="fas fa-home" aria-hidden="true"></i>
         <span class="visually-hidden">Начало</span>
     </a>
 
-    <!-- Back Button (един екран назад) -->
     <button type="button"
             class="back-btn"
             title="Назад"
@@ -37,13 +35,11 @@
         <span class="visually-hidden">Назад</span>
     </button>
 
-    <!-- 🛒 Cart Button (вляво от auth) -->
     <a asp-controller="Cart" asp-action="Index" class="cart-btn" title="Количка">
         <i class="fas fa-shopping-cart"></i>
         <span id="cart-count" class="cart-count-badge">0</span>
     </a>
 
-    <!-- Auth Buttons -->
     <div class="auth-bar">
         @if (SignInManager.IsSignedIn(User))
         {
@@ -66,13 +62,16 @@
         }
     </div>
 
-    <!-- Content -->
     <main class="tk-main">
-        <partial name="_AdminBar" />
+        @* Показваме AdminBar само ако потребителят е админ *@
+        @if (SignInManager.IsSignedIn(User) && User.IsInRole("Admin"))
+        {
+            <partial name="_AdminBar" />
+        }
+
         @RenderBody()
     </main>
 
-    <!-- Footer -->
     <footer class="main-footer">
         <div class="footer-container">
             <div class="footer-section">
@@ -101,14 +100,7 @@
     @await RenderSectionAsync("Scripts", required: false)
 
     <script>
-        @if (ViewContext.RouteData.Values["Action"]?.ToString() != "Index")
-        {
-                <a href="javascript:history.back()" class="back-btn" title="Назад">
-                    <i class="fas fa-arrow-left"></i>
-                </a>
-        }
-
-        // глобална функция – показва броя продукти в количката
+        // Глобална функция – показва броя продукти в количката
         function updateCartCount() {
             let count = 0;
             try {
@@ -126,11 +118,9 @@
             const badge = document.getElementById("cart-count");
             if (badge) {
                 badge.textContent = count;
+                // Скриваме баджа визуално, ако количката е празна
+                badge.style.display = count > 0 ? "flex" : "none";
             }
-        }
-
-        function updateCartBadge() {
-            updateCartCount();
         }
 
         document.addEventListener("DOMContentLoaded", updateCartCount);
@@ -143,13 +133,3 @@
     </script>
 </body>
 </html>
-
-
-
-
-
-
-
-
-
-

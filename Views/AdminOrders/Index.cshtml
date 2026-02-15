@@ -1,0 +1,61 @@
+﻿@model IEnumerable<TKGroopBG.Models.Order>
+
+<div class="container mt-5 fade-up">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="logo-text" style="margin:0;">Управление на поръчки</h2>
+        <span class="badge-admin">Общо: @Model.Count()</span>
+    </div>
+
+    <div class="cart-table shadow-sm">
+        <table class="table table-hover mb-0">
+            <thead class="table-dark">
+                <tr>
+                    <th class="ps-4">Клиент</th>
+                    <th>Дата</th>
+                    <th>Сума</th>
+                    <th>Статус</th>
+                    <th class="text-center">Действие</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var order in Model)
+                {
+                    // Логика за избор на CSS клас според статуса
+                    string statusClass = order.Status switch
+                    {
+                        "Нова" => "status-new",
+                        "Обработва се" => "status-processing",
+                        "Изпратена" => "status-shipped",
+                        "Завършена" => "status-completed",
+                        _ => "status-processing"
+                    };
+
+                    <tr class="align-middle">
+                        <td class="ps-4">
+                            <div class="fw-bold">@order.CustomerName</div>
+                            <small class="text-muted"><i class="fas fa-phone fa-xs"></i> @order.Phone</small>
+                        </td>
+                        <td>@order.CreatedAt.ToString("dd.MM.yyyy")</td>
+                        <td class="product-price">@order.TotalPrice лв.</td>
+                        <td>
+                            <span class="status-pill @statusClass">
+                                <i class="fas fa-circle" style="font-size: 8px;"></i> @order.Status
+                            </span>
+                        </td>
+                        <td class="text-center pe-4">
+                            <form asp-action="UpdateStatus" method="post" class="d-inline-flex gap-2 align-items-center">
+                                <input type="hidden" name="id" value="@order.Id" />
+                                <select name="newStatus" class="status-select" onchange="this.form.submit()">
+                                    <option value="Нова" selected="@(order.Status == "Нова")">Нова</option>
+                                    <option value="Обработва се" selected="@(order.Status == "Обработва се")">Обработва се</option>
+                                    <option value="Изпратена" selected="@(order.Status == "Изпратена")">Изпратена</option>
+                                    <option value="Завършена" selected="@(order.Status == "Завършена")">Завършена</option>
+                                </select>
+                            </form>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

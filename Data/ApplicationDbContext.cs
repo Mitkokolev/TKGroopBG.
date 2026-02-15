@@ -12,5 +12,7 @@ namespace TKGroopBG.Data
         }
         public DbSet<TKGroopBG.Models.Gallery> Gallery { get; set; } = default!;
         public DbSet<TKGroopBG.Models.Products> Products { get; set; } = default!;
+        public DbSet<Order> Orders { get; set; }
+        public DbSet<OrderItem> OrderItems { get; set; }
     }
 }
