@@ -18,22 +18,14 @@ namespace TKGroopBG.Controllers
         }
 
         [HttpGet]
-        public IActionResult Index() => View();
-
-        [HttpGet]
         public IActionResult Order() => View(new OrderRequest());
 
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> SubmitOrder(OrderRequest model)
         {
-            if (string.IsNullOrWhiteSpace(model.CartJson))
-            {
-                ModelState.AddModelError("", "Количката е празна.");
+            if (string.IsNullOrWhiteSpace(model.CartJson) || !ModelState.IsValid)
                 return View("Order", model);
-            }
-
-            if (!ModelState.IsValid) return View("Order", model);
 
             var order = new Order
             {
@@ -47,34 +39,22 @@ namespace TKGroopBG.Controllers
                 Status = "Нова"
             };
 
-            // Пресмятане на общата сума от JSON-а
+            // Пресмятане на общата сума
             try
             {
                 var items = JsonSerializer.Deserialize<List<CartItemDto>>(model.CartJson, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-                if (items != null)
-                {
-                    foreach (var item in items)
-                    {
-                        order.TotalPrice += item.Price * item.Qty;
-                    }
-                }
+                if (items != null) foreach (var item in items) order.TotalPrice += item.Price * item.Qty;
             }
-            catch { /* Логика за грешка при десериализация */ }
+            catch { }
 
             _context.Orders.Add(order);
             await _context.SaveChangesAsync();
-
             await _emailService.SendOrderEmailAsync(model);
 
-            TempData["OrderSuccess"] = "Поръчката беше изпратена успешно.";
+            TempData["OrderSuccess"] = "Успешна поръчка!";
             return RedirectToAction("Index", "Home");
         }
     }
 
-    public class CartItemDto
-    {
-        public string Name { get; set; }
-        public decimal Price { get; set; }
-        public int Qty { get; set; }
-    }
+    public class CartItemDto { public string Name { get; set; } = ""; public decimal Price { get; set; } public int Qty { get; set; } }
 }

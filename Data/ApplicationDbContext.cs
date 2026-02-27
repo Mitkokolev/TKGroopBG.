@@ -7,13 +7,12 @@ namespace TKGroopBG.Data
     public class ApplicationDbContext : IdentityDbContext
     {
         public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
-            : base(options)
-        {
-        }
+            : base(options) { }
 
         public DbSet<Gallery> Gallery { get; set; } = default!;
         public DbSet<Products> Products { get; set; } = default!;
 
+        // ТОЗИ РЕД ОПРАВЯ ГРЕШКАТА:
         public DbSet<Order> Orders { get; set; } = default!;
     }
 }
