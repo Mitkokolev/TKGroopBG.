@@ -2,7 +2,6 @@
 using Microsoft.EntityFrameworkCore;
 using TKGroopBG.Models;
 
-
 namespace TKGroopBG.Data
 {
     public class ApplicationDbContext : IdentityDbContext
@@ -11,7 +10,10 @@ namespace TKGroopBG.Data
             : base(options)
         {
         }
-        public DbSet<TKGroopBG.Models.Gallery> Gallery { get; set; } = default!;
-        public DbSet<TKGroopBG.Models.Products> Products { get; set; } = default!;
+
+        public DbSet<Gallery> Gallery { get; set; } = default!;
+        public DbSet<Products> Products { get; set; } = default!;
+
+        public DbSet<Order> Orders { get; set; } = default!;
     }
 }
