@@ -1,14 +1,4 @@
-﻿function toggleAccountSidebar() {
-    const sidebar = document.getElementById('accountSidebar');
-    const overlay = document.getElementById('sidebarOverlay');
+﻿// Please see documentation at https://learn.microsoft.com/aspnet/core/client-side/bundling-and-minification
+// for details on configuring this project to bundle and minify static web assets.
 
-    sidebar.classList.toggle('active');
-    overlay.classList.toggle('active');
-
-    // Спира скролването на страницата, когато панелът е отворен
-    if (sidebar.classList.contains('active')) {
-        document.body.style.overflow = 'hidden';
-    } else {
-        document.body.style.overflow = 'auto';
-    }
-}
+// Write your JavaScript code.
