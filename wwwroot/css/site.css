@@ -1059,3 +1059,131 @@ body {
         box-shadow: 0 0 0 3px rgba(194, 24, 27, 0.1);
         outline: none;
     }
+
+/* Основен стил за страничния панел */
+.account-sidebar {
+    position: fixed;
+    top: 0;
+    right: -350px; /* Скрит извън екрана */
+    width: 320px;
+    height: 100%;
+    background: #fff;
+    box-shadow: -5px 0 15px rgba(0,0,0,0.1);
+    z-index: 2000;
+    transition: 0.4s ease-in-out;
+    display: flex;
+    flex-direction: column;
+}
+
+    .account-sidebar.active {
+        right: 0; /* Показва се */
+    }
+
+/* Затъмняване на сайта отзад */
+.sidebar-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.4);
+    display: none;
+    z-index: 1999;
+}
+
+    .sidebar-overlay.active {
+        display: block;
+    }
+
+/* Елементи вътре в панела */
+.sidebar-header {
+    padding: 20px;
+    border-bottom: 1px solid #eee;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.sidebar-body {
+    padding: 30px 20px;
+    flex-grow: 1;
+}
+
+.sidebar-item {
+    display: block;
+    padding: 12px 15px;
+    color: #333;
+    text-decoration: none;
+    border-radius: 8px;
+    margin-bottom: 10px;
+    transition: 0.2s;
+}
+
+    .sidebar-item:hover {
+        background: #f8f9fa;
+        color: #cc0000;
+    }
+
+    .sidebar-item i {
+        width: 25px;
+    }
+
+.logout-btn {
+    border: none;
+    background: #f8d7da;
+    color: #721c24;
+    padding: 12px;
+    border-radius: 0;
+    transition: 0.3s;
+}
+
+    .logout-btn:hover {
+        background: #f5c6cb;
+    }
+
+.close-btn {
+    background: none;
+    border: none;
+    font-size: 2rem;
+    line-height: 1;
+    cursor: pointer;
+}
+/* Стил за кръглия бутон */
+.btn-account-circle {
+    background: #f8f9fa;
+    border: 2px solid #dee2e6;
+    border-radius: 50%;
+    width: 45px;
+    height: 45px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    color: #dc3545; /* Твоето червено */
+    transition: 0.3s;
+    cursor: pointer;
+}
+
+    .btn-account-circle:hover {
+        background: #dc3545;
+        color: white;
+        transform: scale(1.1);
+    }
+
+/* Стил за потребителския панел (Sidebar) */
+.user-sidebar {
+    position: fixed;
+    top: 0;
+    right: -350px; /* Скрит по подразбиране */
+    width: 300px;
+    height: 100vh;
+    background: white;
+    z-index: 10000;
+    box-shadow: -5px 0 15px rgba(0,0,0,0.1);
+    transition: 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    padding: 30px 20px;
+}
+
+    .user-sidebar.active {
+        right: 0;
+    }

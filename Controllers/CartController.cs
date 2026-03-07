@@ -10,21 +10,16 @@ namespace TKGroopBG.Controllers
     {
         private readonly ApplicationDbContext _context;
         private readonly IEmailService _emailService;
-        private readonly ApplicationDbContext _context;
 
-        public CartController(IEmailService emailService)
+        // Поправих конструктора: само една дефиниция за _context
+        public CartController(ApplicationDbContext context, IEmailService emailService)
         {
             _context = context;
             _emailService = emailService;
-            _context = context;
         }
 
         [HttpGet]
-        public IActionResult Index()
-        {
-            // прост view – количката се рисува с JS от localStorage
-            return View();
-        }
+        public IActionResult Index() => View();
 
         [HttpGet]
         public IActionResult Order() => View(new OrderRequest());
@@ -33,7 +28,10 @@ namespace TKGroopBG.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> SubmitOrder(OrderRequest model)
         {
-            if (string.IsNullOrWhiteSpace(model.CartJson))
+            // 1. Десериализираме количката от JSON
+            var items = JsonSerializer.Deserialize<List<CartItemDto>>(model.CartJson);
+
+            if (items == null || !items.Any())
             {
                 ModelState.AddModelError(string.Empty, "Количката е празна.");
             }
@@ -41,12 +39,7 @@ namespace TKGroopBG.Controllers
             if (!ModelState.IsValid)
                 return View("Order", model);
 
-            var order = new Order
-            {
-                return View("Order", model);
-            }
-
-            // create order
+            // 2. Създаваме поръчката
             var order = new Order
             {
                 CustomerName = model.CustomerName,
@@ -54,26 +47,29 @@ namespace TKGroopBG.Controllers
                 Email = model.Email,
                 Address = model.Address,
                 Comment = model.Comment,
-                CreatedAt = DateTime.Now
+                CreatedAt = DateTime.Now,
+                Status = "Нова" // Важно: задай статус
             };
 
+            // 3. Добавяме артикулите
             foreach (var item in items)
             {
                 order.Items.Add(new OrderItem
                 {
-                    Name = item.name,
-                    Price = item.price,
-                    Quantity = item.qty,
-                    Image = item.image
+                    Name = item.Name,
+                    Price = item.Price,
+                    Quantity = item.Qty,
+                    Image = item.Image
                 });
 
-                order.TotalPrice += item.price * item.qty;
+                order.TotalPrice += item.Price * item.Qty;
             }
 
+            // 4. Запис в БД
             _context.Orders.Add(order);
             await _context.SaveChangesAsync();
 
-            // email
+            // 5. Email изпращане
             await _emailService.SendOrderEmailAsync(model);
 
             TempData["OrderSuccess"] = "Поръчката беше изпратена успешно.";

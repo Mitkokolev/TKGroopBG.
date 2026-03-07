@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic; // Задължително добави това
 using System.ComponentModel.DataAnnotations;
 
 namespace TKGroopBG.Models
@@ -16,7 +17,9 @@ namespace TKGroopBG.Models
         public string Email { get; set; } = "";
         public string Status { get; set; } = "Нова";
         public DateTime CreatedAt { get; set; } = DateTime.Now;
+
+        // ДОБАВИ ТОЗИ РЕД:
+        public List<OrderItem> Items { get; set; } = new List<OrderItem>();
     }
 }
-
 
