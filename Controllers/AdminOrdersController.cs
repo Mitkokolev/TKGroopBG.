@@ -6,7 +6,7 @@ using TKGroopBG.Models;
 
 namespace TKGroopBG.Controllers
 {
-    [Authorize(Roles = "Admin")] 
+    [Authorize(Roles = "Admin")]
     public class AdminOrdersController : Controller
     {
         private readonly ApplicationDbContext _context;
@@ -16,6 +16,7 @@ namespace TKGroopBG.Controllers
             _context = context;
         }
 
+        // Показва всички поръчки
         public async Task<IActionResult> Index()
         {
             var orders = await _context.Orders
@@ -24,13 +25,32 @@ namespace TKGroopBG.Controllers
             return View(orders);
         }
 
+        // Методът за СМЯНА на статуса
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> UpdateStatus(int id, string newStatus)
+        {
+            var order = await _context.Orders.FindAsync(id);
+            if (order == null)
+            {
+                return NotFound();
+            }
+
+            order.Status = newStatus;
+            await _context.SaveChangesAsync();
+
+            return RedirectToAction(nameof(Index));
+        }
+
+        // Изтриване на поръчка
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Delete(int id)
         {
             var order = await _context.Orders.FindAsync(id);
             if (order != null)
             {
-                order.Status = newStatus;
+                _context.Orders.Remove(order);
                 await _context.SaveChangesAsync();
             }
             return RedirectToAction(nameof(Index));

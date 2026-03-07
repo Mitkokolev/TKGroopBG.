@@ -7,18 +7,10 @@
         <div class="admin-bar fade-up">
             <span class="badge-admin">ADMIN PANEL</span>
             <div class="admin-actions">
-                @* Бутонът за поръчките *@
                 <a class="btn btn-dark btn-sm" asp-controller="AdminOrders" asp-action="Index">
                     <i class="fas fa-box-open me-1"></i> Поръчки
                 </a>
-
-            @if (ViewBag.AdminButtons is string content && !string.IsNullOrWhiteSpace(content))
-            {
-                <div class="admin-actions">
-                    @Html.Raw(content)
-                </div>
-            }
+            </div>
         </div>
     </div>
 }
-

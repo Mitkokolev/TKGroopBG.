@@ -10,20 +10,11 @@ namespace TKGroopBG.Controllers
     {
         private readonly ApplicationDbContext _context;
         private readonly IEmailService _emailService;
-        private readonly ApplicationDbContext _context;
 
-        public CartController(IEmailService emailService)
+        public CartController(ApplicationDbContext context, IEmailService emailService)
         {
             _context = context;
             _emailService = emailService;
-            _context = context;
-        }
-
-        [HttpGet]
-        public IActionResult Index()
-        {
-            // прост view – количката се рисува с JS от localStorage
-            return View();
         }
 
         [HttpGet]
@@ -33,20 +24,9 @@ namespace TKGroopBG.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> SubmitOrder(OrderRequest model)
         {
-            if (string.IsNullOrWhiteSpace(model.CartJson))
-            {
-                ModelState.AddModelError(string.Empty, "Количката е празна.");
-            }
-
-            if (!ModelState.IsValid)
+            if (string.IsNullOrWhiteSpace(model.CartJson) || !ModelState.IsValid)
                 return View("Order", model);
 
-            var order = new Order
-            {
-                return View("Order", model);
-            }
-
-            // create order
             var order = new Order
             {
                 CustomerName = model.CustomerName,
@@ -54,32 +34,27 @@ namespace TKGroopBG.Controllers
                 Email = model.Email,
                 Address = model.Address,
                 Comment = model.Comment,
-                CreatedAt = DateTime.Now
+                CartJson = model.CartJson,
+                CreatedAt = DateTime.Now,
+                Status = "Нова"
             };
 
-            foreach (var item in items)
+            // Пресмятане на общата сума
+            try
             {
-                order.Items.Add(new OrderItem
-                {
-                    Name = item.name,
-                    Price = item.price,
-                    Quantity = item.qty,
-                    Image = item.image
-                });
-
-                order.TotalPrice += item.price * item.qty;
+                var items = JsonSerializer.Deserialize<List<CartItemDto>>(model.CartJson, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                if (items != null) foreach (var item in items) order.TotalPrice += item.Price * item.Qty;
             }
+            catch { }
 
             _context.Orders.Add(order);
             await _context.SaveChangesAsync();
-
-            // email
             await _emailService.SendOrderEmailAsync(model);
 
-            TempData["OrderSuccess"] = "Поръчката беше изпратена успешно.";
+            TempData["OrderSuccess"] = "Успешна поръчка!";
             return RedirectToAction("Index", "Home");
         }
     }
+
+    public class CartItemDto { public string Name { get; set; } = ""; public decimal Price { get; set; } public int Qty { get; set; } }
 }
-
-

@@ -11,6 +11,7 @@ namespace TKGroopBG.Models
         public string CartJson { get; set; } = "";
         public decimal TotalPrice { get; set; }
 
+        // Липсващите полета от снимките ти:
         public string CustomerName { get; set; } = "";
         public string Phone { get; set; } = "";
         public string Email { get; set; } = "";
