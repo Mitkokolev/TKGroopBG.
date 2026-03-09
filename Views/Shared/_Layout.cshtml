@@ -24,15 +24,10 @@
 
     <a asp-controller="Home" asp-action="Index" class="home-btn" title="Начало">
         <i class="fas fa-home" aria-hidden="true"></i>
-        <span class="visually-hidden">Начало</span>
     </a>
 
-    <button type="button"
-            class="back-btn"
-            title="Назад"
-            onclick="history.back()">
+    <button type="button" class="back-btn" title="Назад" onclick="history.back()">
         <i class="fas fa-arrow-left" aria-hidden="true"></i>
-        <span class="visually-hidden">Назад</span>
     </button>
 
     <a asp-controller="Cart" asp-action="Index" class="cart-btn" title="Количка">
@@ -43,16 +38,11 @@
     <div class="auth-bar">
         @if (SignInManager.IsSignedIn(User))
         {
-            <div class="auth-user">
-                <span class="auth-hello">Здрасти, @User.Identity?.Name</span>
-                <form class="d-inline"
-                      asp-area="Identity"
-                      asp-page="/Account/Logout"
-                      asp-route-returnUrl="~/"
-                      method="post">
-                    @Html.AntiForgeryToken()
-                    <button type="submit" class="btn-auth btn-auth-danger">Изход</button>
-                </form>
+            <div class="auth-user d-flex align-items-center gap-2">
+                <span class="auth-hello d-none d-md-inline">Здравей, @User.Identity?.Name?.Split('@')[0]</span>
+                <button type="button" class="btn-account-circle" onclick="toggleUserSidebar()">
+                    <i class="fas fa-user-circle"></i>
+                </button>
             </div>
         }
         else
@@ -62,8 +52,42 @@
         }
     </div>
 
+    @if (SignInManager.IsSignedIn(User))
+    {
+        <div id="userSidebar" class="user-sidebar">
+            <div class="text-end mb-4">
+                <button type="button" class="btn-close" onclick="toggleUserSidebar()"></button>
+            </div>
+
+            <div class="text-center mb-4">
+                <i class="fas fa-user-circle fa-4x text-danger mb-2"></i>
+                <h6 class="text-muted mb-1">Влязохте като:</h6>
+                <strong class="d-block mb-3">@User.Identity?.Name</strong>
+                <hr />
+            </div>
+
+            <div class="list-group list-group-flush">
+                <a asp-controller="Orders" asp-action="MyOrders" class="list-group-item list-group-item-action border-0 py-3">
+                    <i class="fas fa-box-open me-2 text-danger"></i> Моите поръчки
+                </a>
+                <a asp-area="Identity" asp-page="/Account/Manage/Index" class="list-group-item list-group-item-action border-0 py-3">
+                    <i class="fas fa-user-cog me-2 text-danger"></i> Настройки на профила
+                </a>
+
+                <div class="mt-4 px-3">
+                    <form asp-area="Identity" asp-page="/Account/Logout" asp-route-returnUrl="~/" method="post">
+                        @Html.AntiForgeryToken()
+                        <button type="submit" class="btn btn-danger w-100 py-2 shadow-sm">
+                            <i class="fas fa-sign-out-alt me-2"></i> Изход
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        <div id="sidebarOverlay" class="sidebar-overlay" onclick="toggleUserSidebar()"></div>
+    }
+
     <main class="tk-main">
-        @* Показваме AdminBar само ако потребителят е админ *@
         @if (SignInManager.IsSignedIn(User) && User.IsInRole("Admin"))
         {
             <partial name="_AdminBar" />
@@ -87,12 +111,11 @@
             </div>
 
             <div class="footer-section footer-social">
-                <a href="https://facebook.com" target="_blank" rel="noopener noreferrer" aria-label="Facebook">
+                <a href="https://facebook.com" target="_blank" rel="noopener noreferrer">
                     <i class="fab fa-facebook"></i>
                 </a>
             </div>
         </div>
-
         <p class="footer-copy">© @DateTime.Now.Year TKGroopBG — Всички права запазени</p>
     </footer>
 
@@ -100,35 +123,37 @@
     @await RenderSectionAsync("Scripts", required: false)
 
     <script>
-        // Глобална функция – показва броя продукти в количката
+        // Функция за отваряне/затваряне на панела
+        function toggleUserSidebar() {
+            const sidebar = document.getElementById('userSidebar');
+            const overlay = document.getElementById('sidebarOverlay');
+            if(sidebar) {
+                sidebar.classList.toggle('active');
+                overlay.classList.toggle('active');
+            }
+        }
+
+        // Количка функционалност
         function updateCartCount() {
             let count = 0;
             try {
                 const raw = localStorage.getItem("tk_cart");
                 if (raw) {
                     const arr = JSON.parse(raw);
-                    if (Array.isArray(arr)) {
-                        count = arr.length;
-                    }
+                    if (Array.isArray(arr)) count = arr.length;
                 }
-            } catch (e) {
-                count = 0;
-            }
+            } catch (e) { count = 0; }
 
             const badge = document.getElementById("cart-count");
             if (badge) {
                 badge.textContent = count;
-                // Скриваме баджа визуално, ако количката е празна
                 badge.style.display = count > 0 ? "flex" : "none";
             }
         }
 
         document.addEventListener("DOMContentLoaded", updateCartCount);
-
         window.addEventListener("storage", function (e) {
-            if (e.key === "tk_cart") {
-                updateCartCount();
-            }
+            if (e.key === "tk_cart") updateCartCount();
         });
     </script>
 </body>
