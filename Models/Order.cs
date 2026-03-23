@@ -15,6 +15,10 @@ namespace TKGroopBG.Models
         public string CustomerName { get; set; } = "";
         public string Phone { get; set; } = "";
         public string Email { get; set; } = "";
+
+        // НОВОТО ПОЛЕ: Използва се за MyOrders страницата
+        public string? CustomerEmail { get; set; }
+
         public string Status { get; set; } = "Нова";
         public DateTime CreatedAt { get; set; } = DateTime.Now;
 

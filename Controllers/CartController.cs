@@ -1,8 +1,13 @@
-﻿using System.Text.Json;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text.Json;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using TKGroopBG.Data;
 using TKGroopBG.Models;
 using TKGroopBG.Services;
-using TKGroopBG.Data;
 
 namespace TKGroopBG.Controllers
 {
@@ -11,7 +16,6 @@ namespace TKGroopBG.Controllers
         private readonly ApplicationDbContext _context;
         private readonly IEmailService _emailService;
 
-        // Поправих конструктора: само една дефиниция за _context
         public CartController(ApplicationDbContext context, IEmailService emailService)
         {
             _context = context;
@@ -48,7 +52,10 @@ namespace TKGroopBG.Controllers
                 Address = model.Address,
                 Comment = model.Comment,
                 CreatedAt = DateTime.Now,
-                Status = "Нова" // Важно: задай статус
+                Status = "Нова",
+
+                // ВАЖНО: Записваме кой прави поръчката, за да излиза в "Моите поръчки"
+                CustomerEmail = User.Identity?.IsAuthenticated == true ? User.Identity.Name : model.Email
             };
 
             // 3. Добавяме артикулите
@@ -59,7 +66,9 @@ namespace TKGroopBG.Controllers
                     Name = item.Name,
                     Price = item.Price,
                     Quantity = item.Qty,
-                    Image = item.Image
+
+                    // ЗАЩИТА: Ако няма снимка от JS количката, слагаме празен текст, за да не гърми БД
+                    Image = item.Image ?? ""
                 });
 
                 order.TotalPrice += item.Price * item.Qty;

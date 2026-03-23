@@ -20,5 +20,6 @@ namespace TKGroopBG.Data
 
         public DbSet<Order> Orders { get; set; } = default!;
         public DbSet<OrderItem> OrderItems { get; set; } = default!;
+        public DbSet<Cart> Carts { get; set; }
     }
 }
