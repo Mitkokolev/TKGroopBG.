@@ -12,7 +12,7 @@
 
         // Foreign Key
         public int OrderId { get; set; }
-        public Order Order { get; set; } = null!;
+        public Orders Order { get; set; } = null!;
     }
 }
 

@@ -1,4 +1,7 @@
-﻿using System.Security.Claims;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Security.Claims;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -16,20 +19,26 @@ namespace TKGroopBG.Controllers
 
         // --- ПОТРЕБИТЕЛСКА ЧАСТ ---
 
-        // Метод за "Моите поръчки" - достъпен за всеки логнат клиент
         public async Task<IActionResult> MyOrders()
         {
-            // Взимаме имейла на текущо логнатия потребител
+            // 1. Взимаме имейла на логнатия човек автоматично
             var userEmail = User.Identity?.Name;
 
+            if (string.IsNullOrEmpty(userEmail))
+            {
+                return RedirectToAction("Login", "Account");
+            }
+
+            // 2. Търсим поръчките му. 
+            // ВАЖНО: Използваме OrderDate, защото CreatedAt липсва в твоя модел (image_62e15e.png)
             var orders = await _context.Orders
                 .Where(o => o.Email == userEmail)
                 .AsNoTracking()
-                .OrderByDescending(o => o.CreatedAt)
+                .OrderByDescending(o => o.OrderDate)
                 .ToListAsync();
 
             return View(orders);
-        }
+        }   
 
         // Потребителят може да вижда детайли само на СВОЯ поръчка
         public async Task<IActionResult> Details(int id)
@@ -37,11 +46,15 @@ namespace TKGroopBG.Controllers
             var userEmail = User.Identity?.Name;
             var isAdmin = User.IsInRole("Admin");
 
-            var order = await _context.Orders.AsNoTracking().FirstOrDefaultAsync(o => o.Id == id);
+            // КРИТИЧНО: Добавяме .Include(o => o.OrderItems), за да се виждат продуктите!
+            var order = await _context.Orders
+                .Include(o => o.OrderItems)
+                .AsNoTracking()
+                .FirstOrDefaultAsync(o => o.Id == id);
 
             if (order == null) return NotFound();
 
-            // Проверка за сигурност: Ако не е админ и имейлът не съвпада, отказваме достъп
+            // Проверка за сигурност
             if (!isAdmin && order.Email != userEmail)
             {
                 return Forbid();
@@ -55,12 +68,29 @@ namespace TKGroopBG.Controllers
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Index()
         {
+            // Админът вижда всичко с включени продукти
             var orders = await _context.Orders
+                .Include(o => o.OrderItems)
                 .AsNoTracking()
                 .OrderByDescending(o => o.Id)
                 .ToListAsync();
 
             return View(orders);
+        }
+
+        // НОВ МЕТОД: Смяна на статус (за админ панела)
+        [HttpPost]
+        [Authorize(Roles = "Admin")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> UpdateStatus(int id, string status)
+        {
+            var order = await _context.Orders.FindAsync(id);
+            if (order == null) return NotFound();
+
+            order.Status = status;
+            await _context.SaveChangesAsync();
+
+            return RedirectToAction(nameof(Index));
         }
 
         [HttpPost]

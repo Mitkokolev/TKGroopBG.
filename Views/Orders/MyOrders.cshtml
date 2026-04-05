@@ -1,0 +1,43 @@
+﻿@model IEnumerable<TKGroopBG.Models.Orders>
+
+<div class="container mt-5">
+    <h2><i class="fas fa-box text-danger"></i> Моите поръчки</h2>
+    <p class="text-muted">Здравейте, тук можете да следите историята на вашите поръчки.</p>
+
+    <div class="table-responsive mt-4">
+        <table class="table table-hover">
+            <thead class="table-dark">
+                <tr>
+                    <th>№ Поръчка</th>
+                    <th>Дата</th>
+                    <th>Сума</th>
+                    <th>Статус</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model != null && Model.Any())
+                {
+                    @foreach (var order in Model)
+                    {
+                        <tr>
+                            <td>#@order.Id</td>
+                            <td>@order.OrderDate.ToString("dd.MM.yyyy HH:mm")</td>
+                            <td>@order.TotalPrice.ToString("F2") лв.</td>
+                            <td>
+                                <span class="badge @(order.Status == "Нова" ? "bg-primary" : "bg-success")">
+                                    @order.Status
+                                </span>
+                            </td>
+                        </tr>
+                    }
+                }
+                else
+                {
+                    <tr>
+                        <td colspan="4" class="text-center">Все още нямате направени поръчки.</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

@@ -1,4 +1,7 @@
-﻿using System.Net;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Net;
 using System.Net.Mail;
 using System.Text;
 using System.Threading.Tasks;
@@ -7,11 +10,6 @@ using TKGroopBG.Models;
 
 namespace TKGroopBG.Services
 {
-    public interface IEmailService
-    {
-        Task SendOrderEmailAsync(OrderRequest order);
-    }
-
     public class EmailService : IEmailService
     {
         private readonly SmtpSettings _settings;
@@ -23,7 +21,24 @@ namespace TKGroopBG.Services
 
         public async Task SendOrderEmailAsync(OrderRequest order)
         {
-            var body = BuildBody(order);
+            var sb = new StringBuilder();
+            sb.Append("<h2>Нова поръчка от TKGroopBG</h2>");
+            sb.Append($"<p><b>Клиент:</b> {order.FirstName} {order.LastName}</p>");
+            sb.Append($"<p><b>Телефон:</b> {order.Phone}</p>");
+            sb.Append($"<p><b>Град:</b> {order.City}</p>");
+            sb.Append("<table border='1' style='border-collapse:collapse; width:100%;'>");
+            sb.Append("<tr style='background:#eee;'><th>Продукт</th><th>Детайли</th><th>Цена</th></tr>");
+
+            foreach (var item in order.Items)
+            {
+                sb.Append("<tr>");
+                sb.Append($"<td>{item.ProductName}</td>");
+                sb.Append($"<td>{item.Details}</td>");
+                sb.Append($"<td>{item.Price} лв.</td>");
+                sb.Append("</tr>");
+            }
+            sb.Append("</table>");
+            sb.Append($"<h3>Обща сума: {order.Items.Sum(x => x.Price)} лв.</h3>");
 
             using var client = new SmtpClient(_settings.Host, _settings.Port)
             {
@@ -31,33 +46,12 @@ namespace TKGroopBG.Services
                 Credentials = new NetworkCredential(_settings.Username, _settings.Password)
             };
 
-            var mail = new MailMessage
+            var mail = new MailMessage(_settings.From, _settings.To, "Нова поръчка от сайта", sb.ToString())
             {
-                From = new MailAddress(_settings.From),
-                Subject = "Нова заявка от сайта TKGroopBG",
-                Body = body,
-                IsBodyHtml = false
+                IsBodyHtml = true
             };
-
-            mail.To.Add(_settings.To);
 
             await client.SendMailAsync(mail);
         }
-
-        private string BuildBody(OrderRequest o)
-        {
-            var sb = new StringBuilder();
-            sb.AppendLine("Нова заявка от сайта:");
-            sb.AppendLine($"Име: {o.CustomerName}");
-            sb.AppendLine($"Телефон: {o.Phone}");
-            sb.AppendLine($"Имейл: {o.Email}");
-            sb.AppendLine($"Адрес: {o.Address}");
-            sb.AppendLine($"Коментар: {o.Comment}");
-            sb.AppendLine();
-            sb.AppendLine("Съдържание на количката (JSON):");
-            sb.AppendLine(o.CartJson ?? "(празно)");
-            return sb.ToString();
-        }
     }
 }
-

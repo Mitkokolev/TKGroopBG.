@@ -2,54 +2,145 @@
     ViewData["Title"] = "Количка";
 }
 
-<div class="cart-container">
-    <h2>Вашата количка</h2>
+<div class="container mt-5">
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card shadow-sm p-4">
+                <h2 class="mb-4"><i class="fas fa-shopping-cart text-danger"></i> Вашата количка</h2>
+                <div id="cartItems"></div>
+                <hr />
+                <div class="d-flex justify-content-between align-items-center">
+                    <h4>Общо: <span id="totalPrice" class="text-danger">0.00</span> лв</h4>
+                </div>
+            </div>
+        </div>
 
-    <div id="cartItems"></div>
-
-    <div class="cart-footer">
-        <h4>Общо: <span id="totalPrice">0.00</span> лв</h4>
-        <a href="/Cart/Order" class="btn btn-success">Поръчай</a>
+        <div class="col-md-4">
+            <div class="card shadow-sm p-4">
+                <h4 class="mb-3">Данни за доставка</h4>
+                <div id="orderForm">
+                    <div class="mb-3">
+                        <label class="form-label">Име и Фамилия</label>
+                        <input type="text" id="CustomerName" class="form-control" placeholder="Иван Иванов" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Телефон</label>
+                        <input type="tel" id="Phone" class="form-control" placeholder="08XXXXXXXX" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Имейл</label>
+                        <input type="email" id="Email" class="form-control" placeholder="example@mail.com">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Град и Адрес</label>
+                        <textarea id="Address" class="form-control" rows="2" placeholder="гр. София, ул. Примерна 1"></textarea>
+                    </div>
+                    <button onclick="submitOrder()" class="btn btn-danger w-100 btn-lg shadow">
+                        <i class="fas fa-check-circle"></i> Финализирай поръчката
+                    </button>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 
-<script>
-    let cart = JSON.parse(localStorage.getItem("tk_cart")) || [];
-    let container = document.getElementById("cartItems");
-    let total = 0;
-
-    if (cart.length === 0) {
-        container.innerHTML = "<p>Количката е празна.</p>";
-    }
-
-    cart.forEach((p, i) => {
-
-        total += Number(p.price) * (p.qty || 1);
-
-        container.innerHTML += `
-            <div class="cart-item">
-                <img src="${p.image}" style="height:80px;border-radius:10px;margin-right:15px" />
-
-                <div class="cart-info">
-                    <h5>${p.name}</h5>
-                    <p>${Number(p.price).toFixed(2)} лв × ${p.qty || 1}</p>
-                </div>
-
-                <button onclick="removeItem(${i})"
-                        class="btn btn-sm btn-danger">
-                    Премахни
-                </button>
-            </div>
-        `;
-    });
-
-    document.getElementById("totalPrice").innerText = total.toFixed(2);
-
-
-    function removeItem(i){
+@section Scripts {
+    <script>
+        // Използваме директно ключа, с който работи твоят сайт
         let cart = JSON.parse(localStorage.getItem("tk_cart")) || [];
-        cart.splice(i,1);
-        localStorage.setItem("tk_cart", JSON.stringify(cart));
-        location.reload();
-    }
-</script>
+        let container = document.getElementById("cartItems");
+        let total = 0;
+
+        function renderCart() {
+            container.innerHTML = "";
+            total = 0;
+
+            if (cart.length === 0) {
+                container.innerHTML = "<div class='alert alert-warning'>Количката е празна.</div>";
+                document.getElementById("orderForm").style.opacity = "0.5";
+                document.getElementById("orderForm").style.pointerEvents = "none";
+            } else {
+                cart.forEach((p, i) => {
+                    // Гъвкаво взимане на данни: проверяваме за .price или .Price (и за името също)
+                    let itemPrice = Number(p.price || p.Price || 0);
+                    let itemName = p.name || p.ProductName || "Продукт";
+                    let itemQty = Number(p.qty || p.Quantity || 1);
+
+                    total += itemPrice * itemQty;
+
+                    container.innerHTML += `
+                        <div class="d-flex align-items-center mb-3 p-2 border-bottom">
+                            <img src="${p.image || '/images/no-image.png'}" style="height:60px; width:60px; object-fit:cover; border-radius:8px; margin-right:15px">
+                            <div class="flex-grow-1">
+                                <h6 class="mb-0">${itemName}</h6>
+                                <small class="text-muted">${itemPrice.toFixed(2)} лв. x ${itemQty}</small>
+                            </div>
+                            <button onclick="removeItem(${i})" class="btn btn-outline-danger btn-sm">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    `;
+                });
+            }
+            document.getElementById("totalPrice").innerText = total.toFixed(2);
+        }
+
+        function removeItem(i) {
+            cart.splice(i, 1);
+            localStorage.setItem("tk_cart", JSON.stringify(cart));
+            renderCart();
+            if(typeof updateCartCount === 'function') updateCartCount();
+        }
+
+        async function submitOrder() {
+            const customerName = document.getElementById("CustomerName").value;
+            const phone = document.getElementById("Phone").value;
+
+            if (!customerName || !phone) {
+                alert("Моля, попълнете име и телефон!");
+                return;
+            }
+
+            // Взимаме пресния масив от localStorage преди пращане
+            const finalCart = JSON.parse(localStorage.getItem("tk_cart")) || [];
+
+            const orderData = {
+                customerName: customerName,
+                email: document.getElementById("Email").value,
+                phone: phone,
+                address: document.getElementById("Address").value,
+                items: finalCart.map(item => ({
+                    // Тук мапваме към имената, които OrderRequest.cs очаква
+                    productName: item.name || item.ProductName || "Продукт",
+                    price: Number(item.price || item.Price || 0),
+                    image: item.image || "",
+                    details: item.details || ""
+                }))
+            };
+
+            try {
+                const response = await fetch('/Cart/Order', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(orderData)
+                });
+
+                if (response.ok) {
+                    alert("Поръчката е приета успешно!");
+                    localStorage.removeItem("tk_cart");
+                    window.location.href = "/";
+                } else {
+                    const err = await response.json();
+                    alert("Грешка: " + (err.message || "Неуспешна поръчка"));
+                }
+            } catch (error) {
+                console.error("Грешка:", error);
+                alert("Възникна техническа грешка при изпращане!");
+            }
+        }
+
+        renderCart();
+    </script>
+}
