@@ -1,8 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+<<<<<<< HEAD
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
+=======
+using System.Text.Json;
+using System.Threading.Tasks;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+>>>>>>> 50a922d206104454f183829c34a980899f24736a
 using TKGroopBG.Data;
 using TKGroopBG.Models;
 using TKGroopBG.Services;
@@ -34,6 +41,7 @@ namespace TKGroopBG.Controllers
 
             try
             {
+<<<<<<< HEAD
                 var order = new Orders
                 {
                     CustomerName = request.CustomerName ?? $"{request.FirstName} {request.LastName}",
@@ -49,6 +57,41 @@ namespace TKGroopBG.Controllers
                     Status = "Нова",
                     TotalPrice = request.Items.Sum(i => i.Price)
                 };
+=======
+                ModelState.AddModelError(string.Empty, "Количката е празна.");
+            }
+
+            if (!ModelState.IsValid)
+                return View("Order", model);
+
+            // 2. Създаваме поръчката
+            var order = new Order
+            {
+                CustomerName = model.CustomerName,
+                Phone = model.Phone,
+                Email = model.Email,
+                Address = model.Address,
+                Comment = model.Comment,
+                CreatedAt = DateTime.Now,
+                Status = "Нова",
+
+                // ВАЖНО: Записваме кой прави поръчката, за да излиза в "Моите поръчки"
+                CustomerEmail = User.Identity?.IsAuthenticated == true ? User.Identity.Name : model.Email
+            };
+
+            // 3. Добавяме артикулите
+            foreach (var item in items)
+            {
+                order.Items.Add(new OrderItem
+                {
+                    Name = item.Name,
+                    Price = item.Price,
+                    Quantity = item.Qty,
+
+                    // ЗАЩИТА: Ако няма снимка от JS количката, слагаме празен текст, за да не гърми БД
+                    Image = item.Image ?? ""
+                });
+>>>>>>> 50a922d206104454f183829c34a980899f24736a
 
                 _context.Orders.Add(order);
                 await _context.SaveChangesAsync();

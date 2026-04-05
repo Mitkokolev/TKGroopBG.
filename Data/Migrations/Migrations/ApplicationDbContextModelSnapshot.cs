@@ -224,6 +224,34 @@ namespace TKGroopBG.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
+            modelBuilder.Entity("TKGroopBG.Models.Cart", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("DateCreated")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("ProductId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Quantity")
+                        .HasColumnType("int");
+
+                    b.Property<string>("UserEmail")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProductId");
+
+                    b.ToTable("Carts");
+                });
+
             modelBuilder.Entity("TKGroopBG.Models.Gallery", b =>
                 {
                     b.Property<int>("Id")
@@ -309,6 +337,9 @@ namespace TKGroopBG.Migrations
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
+
+                    b.Property<string>("CustomerEmail")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("CustomerName")
                         .IsRequired()
@@ -428,7 +459,22 @@ namespace TKGroopBG.Migrations
                         .IsRequired();
                 });
 
+<<<<<<<< HEAD:Data/Migrations/ApplicationDbContextModelSnapshot.cs
             modelBuilder.Entity("TKGroopBG.Models.OrderItems", b =>
+========
+            modelBuilder.Entity("TKGroopBG.Models.Cart", b =>
+                {
+                    b.HasOne("TKGroopBG.Models.Products", "Product")
+                        .WithMany()
+                        .HasForeignKey("ProductId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Product");
+                });
+
+            modelBuilder.Entity("TKGroopBG.Models.OrderItem", b =>
+>>>>>>>> 50a922d206104454f183829c34a980899f24736a:Data/Migrations/Migrations/ApplicationDbContextModelSnapshot.cs
                 {
                     b.HasOne("TKGroopBG.Models.Orders", "Order")
                         .WithMany("OrderItems")
