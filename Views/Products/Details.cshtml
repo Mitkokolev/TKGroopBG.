@@ -6,106 +6,97 @@
     Layout = "~/Views/Shared/_Layout.cshtml";
 
     var fallback = Url.Content("~/images/default.jpg");
-    var imagePath = string.IsNullOrEmpty(Model.ImageFileName)
+    var mainImagePath = string.IsNullOrEmpty(Model.ImageFileName)
         ? fallback
         : Url.Content("~/product-images/" + Model.ImageFileName);
 
-    // ще вкараме чисти JS данни през JSON
     var productJson = JsonSerializer.Serialize(new
     {
         id = Model.Id,
         name = Model.Name,
-        price = Model.Price,
-        category = Model.Category,
-        image = imagePath
+        basePrice = Model.Price,
+        category = Model.Category
     });
 }
 
 <div class="container mt-5 product-details-page">
-    <div class="row gx-4 gy-4">
+    <div class="row gx-4">
 
-        <!-- Лява част: голяма снимка + варианти -->
-        <div class="col-lg-8">
-            <div class="product-main-image-box">
-                <img id="mainProductImage"
-                     src="@imagePath"
-                     alt="@Model.Name"
-                     class="product-main-image" />
+        <div class="col-lg-7">
+            <div class="product-main-image-box shadow-sm mb-3 position-relative">
+                <img id="mainProductImage" src="@mainImagePath" alt="@Model.Name" class="img-fluid rounded border" />
             </div>
 
-            <div class="product-variants">
-                <!-- Засега всички варианти сочат към една и съща снимка -->
-                <button type="button"
-                        class="variant-circle active"
-                        data-image="@imagePath"
-                        data-color="Бял"
-                        title="Бял">
-                </button>
-                <button type="button"
-                        class="variant-circle variant-dark"
-                        data-image="@imagePath"
-                        data-color="Антрацит"
-                        title="Антрацит">
-                </button>
-                <button type="button"
-                        class="variant-circle variant-brown"
-                        data-image="@imagePath"
-                        data-color="Кафяв"
-                        title="Кафяв">
-                </button>
-            </div>
-
-            <div class="product-size-inputs mt-4">
-                <div class="size-box">
-                    <label for="heightMm" class="form-label">Размер по височина (мм)</label>
-                    <input id="heightMm" type="number" class="form-control"
-                           placeholder="напр. 1200" min="1" />
-                </div>
-                <div class="size-box">
-                    <label for="widthMm" class="form-label">Размер по ширина (мм)</label>
-                    <input id="widthMm" type="number" class="form-control"
-                           placeholder="напр. 800" min="1" />
-                </div>
+            <div class="d-flex gap-2 overflow-auto py-2">
+                @foreach (var img in Model.Images.Where(i => string.IsNullOrEmpty(i.ColorHex)))
+                {
+                    <img src="~/product-images/@img.ImagePath" class="img-thumbnail" style="width: 80px; cursor:pointer;" onclick="document.getElementById('mainProductImage').src = this.src" />
+                }
             </div>
         </div>
 
-        <!-- Дясна част: инфо + цена + бутон -->
-        <div class="col-lg-4">
-            <div class="product-info-card">
+        <div class="col-lg-5">
+            <div class="p-4 border rounded bg-white shadow-sm">
                 <h2 class="text-danger fw-bold mb-2">@Model.Name</h2>
-
-                @if (!string.IsNullOrWhiteSpace(Model.Description))
-                {
-                    <p class="text-muted">@Model.Description</p>
-                }
-
-                @if (!string.IsNullOrWhiteSpace(Model.Category))
-                {
-                    <p class="small text-secondary mb-2">
-                        Категория: <strong>@Model.Category</strong>
-                    </p>
-                }
-
+                <p class="text-secondary small">@Model.Description</p>
                 <hr />
 
-                <div class="product-price-box">
-                    <p class="mb-1 small text-muted">
-                        Базова цена (на м² / ориентировъчна):
-                    </p>
-                    <p class="h5 text-danger fw-bold mb-3">
-                        @Model.Price.ToString("0.00") лв.
-                    </p>
+                <div class="mb-4">
+                    <label class="form-label small fw-bold d-block mb-2">Цвят на профила:</label>
+                    <div class="d-flex flex-wrap gap-2">
+                        @foreach (var color in Model.Colors)
+                        {
+                            var colorImg = Model.Images.FirstOrDefault(i => i.ColorHex == color.ColorHex)?.ImagePath;
+                            var finalImgPath = colorImg != null ? Url.Content("~/product-images/" + colorImg) : mainImagePath;
 
-                    <p class="mb-1 small text-muted">
-                        Цена според въведените размери:
-                    </p>
-                    <p id="calcPrice" class="h4 fw-bold">
-                        – лв.
-                    </p>
+                            <div class="color-item text-center">
+                                <button type="button"
+                                        class="color-circle shadow-sm"
+                                        style="background-color: @color.ColorHex; width: 40px; height: 40px; border-radius: 50%; border: 3px solid #fff; outline: 1px solid #ddd;"
+                                        data-image="@finalImgPath"
+                                        data-name="@color.ColorName"
+                                        onclick="updateProductColor(this)">
+                                </button>
+                            </div>
+                        }
+                    </div>
+                    <small id="selectedColorLabel" class="d-block mt-2 text-muted" style="font-size: 11px;">Изберете цвят на профила</small>
                 </div>
 
-                <button id="addToCartBtn" class="btn btn-danger w-100 mt-3">
-                    Добави в количката
+                <div class="row g-3 mb-4">
+                    <div class="col-6">
+                        <label class="form-label small fw-bold">Височина (мм)</label>
+                        <input id="heightMm" type="number" class="form-control form-control-lg" placeholder="1200" oninput="calculateTotal()" />
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label small fw-bold">Ширина (мм)</label>
+                        <input id="widthMm" type="number" class="form-control form-control-lg" placeholder="800" oninput="calculateTotal()" />
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <label class="form-label small fw-bold d-block mb-3">Опции за стъклопакет:</label>
+                    @foreach (var variant in Model.Variants)
+                    {
+                        <div class="variant-option border rounded p-3 mb-2 d-flex justify-content-between align-items-center" style="cursor: pointer;" onclick="selectVariant(this, @variant.AdditionalPrice, '@variant.Name')">
+                            <div>
+                                <input type="radio" name="productVariant" class="form-check-input me-2" />
+                                <span>@variant.Name</span>
+                            </div>
+                            <span class="text-danger fw-bold">+@variant.AdditionalPrice лв.</span>
+                        </div>
+                    }
+                </div>
+
+                <div class="price-box bg-light p-3 rounded mb-4">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span class="text-muted">Обща сума:</span>
+                        <h3 id="displayPrice" class="fw-bold text-danger mb-0">-- лв.</h3>
+                    </div>
+                </div>
+
+                <button id="addToCartBtn" class="btn btn-danger btn-lg w-100 py-3 fw-bold shadow">
+                    ДОБАВИ В КОЛИЧКАТА
                 </button>
             </div>
         </div>
@@ -113,107 +104,79 @@
     </div>
 </div>
 
+<style>
+    .color-circle.active {
+        outline: 2px solid #dc3545 !important;
+        transform: scale(1.1);
+    }
+
+    .variant-option.active {
+        border-color: #dc3545 !important;
+        background-color: #fff5f5;
+    }
+
+    .variant-option:hover {
+        background-color: #f8f9fa;
+    }
+</style>
+
 @section Scripts {
     <script>
-        // Данни за продукта от сървъра (Id, име, базова цена и т.н.)
         const product = @Html.Raw(productJson);
+        let selectedVariantPrice = 0;
+        let selectedVariantName = "";
+        let selectedColorName = "";
 
-        // текущо избран цвят
-        let selectedColor = "Бял";
+        function updateProductColor(btn) {
+            // Махаме активния клас от всички кръгчета
+            document.querySelectorAll('.color-circle').forEach(c => c.classList.remove('active'));
+            // Слагаме го на избраното
+            btn.classList.add('active');
 
-        // смяна на варианта (цвят / вариант)
-        document.querySelectorAll('.variant-circle').forEach(btn => {
-            btn.addEventListener('click', function () {
-                document
-                    .querySelectorAll('.variant-circle')
-                    .forEach(b => b.classList.remove('active'));
+            // Сменяме главната снимка
+            const newImg = btn.getAttribute('data-image');
+            document.getElementById('mainProductImage').src = newImg;
 
-                this.classList.add('active');
+            // Обновяваме етикета с името на цвета
+            const colorName = btn.getAttribute('data-name');
+            document.getElementById('selectedColorLabel').innerText = "Избран цвят: " + colorName;
+            selectedColorName = colorName;
+        }
 
-                const img = this.getAttribute('data-image');
-                const color = this.getAttribute('data-color');
+        function selectVariant(element, price, name) {
+            document.querySelectorAll('.variant-option').forEach(v => v.classList.remove('active'));
+            element.classList.add('active');
+            element.querySelector('input').checked = true;
 
-                if (img) {
-                    document.getElementById('mainProductImage').src = img;
-                }
-                if (color) {
-                    selectedColor = color;
-                }
-            });
-        });
+            selectedVariantPrice = price;
+            selectedVariantName = name;
+            calculateTotal();
+        }
 
-        // калкулатор: приемаме, че product.price е цена за 1 м²
-        const basePrice = product.price;
+        function calculateTotal() {
+            const h = parseFloat(document.getElementById('heightMm').value);
+            const w = parseFloat(document.getElementById('widthMm').value);
+            const priceLabel = document.getElementById('displayPrice');
 
-        const heightInput = document.getElementById('heightMm');
-        const widthInput = document.getElementById('widthMm');
-        const priceOutput = document.getElementById('calcPrice');
-
-        function recalcPrice() {
-            const h = parseFloat(heightInput.value);
-            const w = parseFloat(widthInput.value);
-
-            if (!isNaN(h) && !isNaN(w) && h > 0 && w > 0) {
-                const areaM2 = (h / 1000.0) * (w / 1000.0); // мм -> м
-                const price = basePrice * areaM2;
-                priceOutput.textContent = price.toFixed(2) + " лв.";
+            if (h > 0 && w > 0) {
+                const areaM2 = (h / 1000) * (w / 1000);
+                const total = (areaM2 * product.basePrice) + selectedVariantPrice;
+                priceLabel.innerText = total.toFixed(2) + " лв.";
             } else {
-                priceOutput.textContent = "– лв.";
+                priceLabel.innerText = "-- лв.";
             }
         }
 
-        heightInput.addEventListener('input', recalcPrice);
-        widthInput.addEventListener('input', recalcPrice);
+        document.getElementById('addToCartBtn').addEventListener('click', function() {
+            const h = document.getElementById('heightMm').value;
+            const w = document.getElementById('widthMm').value;
 
-        // Добавяне в количката (localStorage)
-        document.getElementById('addToCartBtn').addEventListener('click', function () {
-            const h = parseFloat(heightInput.value);
-            const w = parseFloat(widthInput.value);
-
-            if (isNaN(h) || isNaN(w) || h <= 0 || w <= 0) {
-                alert("Моля, въведи коректни размери (в мм).");
+            if (!h || !w || !selectedVariantName) {
+                alert("Моля, въведете размери и изберете опция!");
                 return;
             }
 
-            const areaM2 = (h / 1000.0) * (w / 1000.0);
-            const totalPrice = basePrice * areaM2;
-
-            // четем текущата количка
-            let cart = [];
-            try {
-                const raw = localStorage.getItem("tk_cart");
-                if (raw) cart = JSON.parse(raw);
-            } catch (e) {
-                cart = [];
-            }
-
-            // запис с полетата, които Cart/Index очаква
-            const cartItem = {
-                id: product.id,
-                name: product.name,
-                category: product.category,
-                basePrice: basePrice,
-                heightMm: h,
-                widthMm: w,
-                areaM2: areaM2,
-                finalPrice: Number(totalPrice.toFixed(2)),
-                color: selectedColor,
-                image: document.getElementById('mainProductImage').src,
-                createdAt: new Date().toISOString()
-            };
-
-            cart.push(cartItem);
-            localStorage.setItem("tk_cart", JSON.stringify(cart));
-
-            // обновяваме баджа горе вдясно, ако функцията съществува
-            if (typeof updateCartBadge === "function") {
-                updateCartBadge();
-            }
-
-            alert("Продуктът е добавен в количката ✅");
+            alert("Продуктът е добавен в количката!");
         });
     </script>
 }
-
-
-

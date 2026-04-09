@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using TKGroopBG.Data;
 
@@ -11,9 +12,11 @@ using TKGroopBG.Data;
 namespace TKGroopBG.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260408113412_InitialSetupWithGallery")]
+    partial class InitialSetupWithGallery
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -338,9 +341,6 @@ namespace TKGroopBG.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
-                    b.Property<string>("CustomerEmail")
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<string>("CustomerName")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -377,6 +377,82 @@ namespace TKGroopBG.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Orders");
+                });
+
+            modelBuilder.Entity("TKGroopBG.Models.ProductColor", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("ColorHex")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("ColorName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("ProductId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProductId");
+
+                    b.ToTable("ProductColors");
+                });
+
+            modelBuilder.Entity("TKGroopBG.Models.ProductImage", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("ColorHex")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("ImagePath")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("ProductId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProductId");
+
+                    b.ToTable("ProductImages");
+                });
+
+            modelBuilder.Entity("TKGroopBG.Models.ProductVariant", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<decimal>("AdditionalPrice")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("ProductId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProductId");
+
+                    b.ToTable("ProductVariants");
                 });
 
             modelBuilder.Entity("TKGroopBG.Models.Products", b =>
@@ -459,9 +535,6 @@ namespace TKGroopBG.Migrations
                         .IsRequired();
                 });
 
-<<<<<<<< HEAD:Data/Migrations/ApplicationDbContextModelSnapshot.cs
-            modelBuilder.Entity("TKGroopBG.Models.OrderItems", b =>
-========
             modelBuilder.Entity("TKGroopBG.Models.Cart", b =>
                 {
                     b.HasOne("TKGroopBG.Models.Products", "Product")
@@ -473,8 +546,7 @@ namespace TKGroopBG.Migrations
                     b.Navigation("Product");
                 });
 
-            modelBuilder.Entity("TKGroopBG.Models.OrderItem", b =>
->>>>>>>> 50a922d206104454f183829c34a980899f24736a:Data/Migrations/Migrations/ApplicationDbContextModelSnapshot.cs
+            modelBuilder.Entity("TKGroopBG.Models.OrderItems", b =>
                 {
                     b.HasOne("TKGroopBG.Models.Orders", "Order")
                         .WithMany("OrderItems")
@@ -485,9 +557,51 @@ namespace TKGroopBG.Migrations
                     b.Navigation("Order");
                 });
 
+            modelBuilder.Entity("TKGroopBG.Models.ProductColor", b =>
+                {
+                    b.HasOne("TKGroopBG.Models.Products", "Product")
+                        .WithMany("Colors")
+                        .HasForeignKey("ProductId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Product");
+                });
+
+            modelBuilder.Entity("TKGroopBG.Models.ProductImage", b =>
+                {
+                    b.HasOne("TKGroopBG.Models.Products", "Product")
+                        .WithMany("Images")
+                        .HasForeignKey("ProductId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Product");
+                });
+
+            modelBuilder.Entity("TKGroopBG.Models.ProductVariant", b =>
+                {
+                    b.HasOne("TKGroopBG.Models.Products", "Product")
+                        .WithMany("Variants")
+                        .HasForeignKey("ProductId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Product");
+                });
+
             modelBuilder.Entity("TKGroopBG.Models.Orders", b =>
                 {
                     b.Navigation("OrderItems");
+                });
+
+            modelBuilder.Entity("TKGroopBG.Models.Products", b =>
+                {
+                    b.Navigation("Colors");
+
+                    b.Navigation("Images");
+
+                    b.Navigation("Variants");
                 });
 #pragma warning restore 612, 618
         }

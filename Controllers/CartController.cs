@@ -1,124 +1,105 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-<<<<<<< HEAD
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc;
-=======
-using System.Text.Json;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
->>>>>>> 50a922d206104454f183829c34a980899f24736a
 using TKGroopBG.Data;
 using TKGroopBG.Models;
-using TKGroopBG.Services;
+using System;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace TKGroopBG.Controllers
 {
     public class CartController : Controller
     {
         private readonly ApplicationDbContext _context;
-        private readonly IEmailService _emailService;
 
-        public CartController(ApplicationDbContext context, IEmailService emailService)
+        public CartController(ApplicationDbContext context)
         {
             _context = context;
-            _emailService = emailService;
         }
 
-        [HttpGet]
         public IActionResult Index()
         {
             return View();
         }
 
         [HttpPost]
+        [Authorize] // Само регистрирани потребители могат да поръчват
         public async Task<IActionResult> Order([FromBody] OrderRequest request)
         {
+            // 1. Проверка за празна количка
             if (request == null || request.Items == null || !request.Items.Any())
-                return BadRequest(new { message = "Количката е празна!" });
+            {
+                return BadRequest(new { success = false, message = "Количката е празна!" });
+            }
+
+            // 2. Взимаме имейла на текущо логнатия потребител
+            var userEmail = User.Identity?.Name;
 
             try
             {
-<<<<<<< HEAD
+                // 3. Създаваме основната поръчка
                 var order = new Orders
                 {
-                    CustomerName = request.CustomerName ?? $"{request.FirstName} {request.LastName}",
+                    Email = userEmail, // Автоматично от профила
                     FirstName = request.FirstName ?? "",
                     LastName = request.LastName ?? "",
-                    Email = request.Email ?? "",
+                    CustomerName = $"{request.FirstName} {request.LastName}".Trim(),
                     Phone = request.Phone ?? "",
                     Address = request.Address ?? "",
                     City = request.City ?? "",
-                    Note = request.Note ?? request.Comment,
+                    Comment = request.Comment ?? "",
+                    CartJson = "[]", // Можеш да сериализираш request.Items тук, ако ти трябва архив
+                    TotalPrice = request.Items.Sum(i => i.Price * i.Quantity),
                     OrderDate = DateTime.Now,
                     CreatedAt = DateTime.Now,
-                    Status = "Нова",
-                    TotalPrice = request.Items.Sum(i => i.Price)
+                    Status = "Нова"
                 };
-=======
-                ModelState.AddModelError(string.Empty, "Количката е празна.");
-            }
 
-            if (!ModelState.IsValid)
-                return View("Order", model);
-
-            // 2. Създаваме поръчката
-            var order = new Order
-            {
-                CustomerName = model.CustomerName,
-                Phone = model.Phone,
-                Email = model.Email,
-                Address = model.Address,
-                Comment = model.Comment,
-                CreatedAt = DateTime.Now,
-                Status = "Нова",
-
-                // ВАЖНО: Записваме кой прави поръчката, за да излиза в "Моите поръчки"
-                CustomerEmail = User.Identity?.IsAuthenticated == true ? User.Identity.Name : model.Email
-            };
-
-            // 3. Добавяме артикулите
-            foreach (var item in items)
-            {
-                order.Items.Add(new OrderItem
-                {
-                    Name = item.Name,
-                    Price = item.Price,
-                    Quantity = item.Qty,
-
-                    // ЗАЩИТА: Ако няма снимка от JS количката, слагаме празен текст, за да не гърми БД
-                    Image = item.Image ?? ""
-                });
->>>>>>> 50a922d206104454f183829c34a980899f24736a
-
-                _context.Orders.Add(order);
-                await _context.SaveChangesAsync();
-
+                // 4. Добавяме всеки продукт към поръчката
                 foreach (var item in request.Items)
                 {
-                    _context.OrderItems.Add(new OrderItems
+                    order.OrderItems.Add(new OrderItems
                     {
-                        OrderId = order.Id,
-                        ProductName = item.ProductName ?? "Продукт",
-                        Quantity = 1,
+                        ProductName = item.ProductName,
                         Price = item.Price,
-                        Image = item.Image ?? "default.jpg",
-                        ConfigurationDetails = item.Details ?? ""
+                        Quantity = item.Quantity > 0 ? item.Quantity : 1,
+                        Image = item.Image,
+                        ConfigurationDetails = "" // Тук можеш да добавиш детайли от конфигуратора
                     });
                 }
 
+                // 5. Запис в базата данни
+                _context.Orders.Add(order);
                 await _context.SaveChangesAsync();
 
-                try { await _emailService.SendOrderEmailAsync(request); } catch { }
-
-                return Ok(new { success = true, orderId = order.Id });
+                return Ok(new { success = true, message = "Поръчката е приета успешно!" });
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { message = "Грешка при запис: " + ex.Message });
+                // Логване на грешката, ако нещо се счупи при записа
+                return StatusCode(500, new { success = false, message = "Грешка при обработка на поръчката: " + ex.Message });
             }
         }
+    }
+
+    // Помощни класове (DTO) за приемане на JSON от JavaScript
+    public class OrderRequest
+    {
+        public string FirstName { get; set; }
+        public string LastName { get; set; }
+        public string Phone { get; set; }
+        public string Address { get; set; }
+        public string City { get; set; }
+        public string Comment { get; set; }
+        public List<CartItemRequest> Items { get; set; }
+    }
+
+    public class CartItemRequest
+    {
+        public string ProductName { get; set; }
+        public decimal Price { get; set; }
+        public int Quantity { get; set; }
+        public string Image { get; set; }
     }
 }
