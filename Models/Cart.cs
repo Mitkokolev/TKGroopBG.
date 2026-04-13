@@ -7,17 +7,18 @@ namespace TKGroopBG.Models
         [Key]
         public int Id { get; set; }
 
-        // Това е ключът към потребителя - използваме Email или UserId
         [Required]
         public string UserEmail { get; set; }
 
-        // Връзка към продукта
         [Required]
         public int ProductId { get; set; }
-        public Products Product { get; set; } // Навигационно свойство
+
+        public virtual Products Product { get; set; }
 
         [Required]
         public int Quantity { get; set; }
+
+        public string? Details { get; set; }
 
         public DateTime DateCreated { get; set; } = DateTime.Now;
     }

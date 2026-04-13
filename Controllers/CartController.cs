@@ -3,103 +3,142 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using TKGroopBG.Data;
 using TKGroopBG.Models;
-using System;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace TKGroopBG.Controllers
 {
+    [Authorize]
     public class CartController : Controller
     {
         private readonly ApplicationDbContext _context;
+        public CartController(ApplicationDbContext context) => _context = context;
 
-        public CartController(ApplicationDbContext context)
+        // 1. ПОКАЗВАНЕ НА КОЛИЧКАТА
+        public async Task<IActionResult> Index()
         {
-            _context = context;
-        }
-
-        public IActionResult Index()
-        {
-            return View();
-        }
-
-        [HttpPost]
-        [Authorize] // Само регистрирани потребители могат да поръчват
-        public async Task<IActionResult> Order([FromBody] OrderRequest request)
-        {
-            // 1. Проверка за празна количка
-            if (request == null || request.Items == null || !request.Items.Any())
-            {
-                return BadRequest(new { success = false, message = "Количката е празна!" });
-            }
-
-            // 2. Взимаме имейла на текущо логнатия потребител
             var userEmail = User.Identity?.Name;
-
-            try
-            {
-                // 3. Създаваме основната поръчка
-                var order = new Orders
-                {
-                    Email = userEmail, // Автоматично от профила
-                    FirstName = request.FirstName ?? "",
-                    LastName = request.LastName ?? "",
-                    CustomerName = $"{request.FirstName} {request.LastName}".Trim(),
-                    Phone = request.Phone ?? "",
-                    Address = request.Address ?? "",
-                    City = request.City ?? "",
-                    Comment = request.Comment ?? "",
-                    CartJson = "[]", // Можеш да сериализираш request.Items тук, ако ти трябва архив
-                    TotalPrice = request.Items.Sum(i => i.Price * i.Quantity),
-                    OrderDate = DateTime.Now,
-                    CreatedAt = DateTime.Now,
-                    Status = "Нова"
-                };
-
-                // 4. Добавяме всеки продукт към поръчката
-                foreach (var item in request.Items)
-                {
-                    order.OrderItems.Add(new OrderItems
-                    {
-                        ProductName = item.ProductName,
-                        Price = item.Price,
-                        Quantity = item.Quantity > 0 ? item.Quantity : 1,
-                        Image = item.Image,
-                        ConfigurationDetails = "" // Тук можеш да добавиш детайли от конфигуратора
-                    });
-                }
-
-                // 5. Запис в базата данни
-                _context.Orders.Add(order);
-                await _context.SaveChangesAsync();
-
-                return Ok(new { success = true, message = "Поръчката е приета успешно!" });
-            }
-            catch (Exception ex)
-            {
-                // Логване на грешката, ако нещо се счупи при записа
-                return StatusCode(500, new { success = false, message = "Грешка при обработка на поръчката: " + ex.Message });
-            }
+            var cartItems = await _context.Cart
+                .Include(c => c.Product)
+                .Where(c => c.UserEmail == userEmail)
+                .ToListAsync();
+            return View(cartItems);
         }
-    }
 
-    // Помощни класове (DTO) за приемане на JSON от JavaScript
-    public class OrderRequest
-    {
-        public string FirstName { get; set; }
-        public string LastName { get; set; }
-        public string Phone { get; set; }
-        public string Address { get; set; }
-        public string City { get; set; }
-        public string Comment { get; set; }
-        public List<CartItemRequest> Items { get; set; }
-    }
+        // 2. ДОБАВЯНЕ В КОЛИЧКАТА
+        [HttpPost]
+        public async Task<IActionResult> AddToCart(int productId, int quantity, string details)
+        {
+            var userEmail = User.Identity?.Name;
+            if (userEmail == null) return Unauthorized();
 
-    public class CartItemRequest
-    {
-        public string ProductName { get; set; }
-        public decimal Price { get; set; }
-        public int Quantity { get; set; }
-        public string Image { get; set; }
+            var existingItem = await _context.Cart
+                .FirstOrDefaultAsync(c => c.ProductId == productId
+                                          && c.UserEmail == userEmail
+                                          && c.Details == details);
+
+            if (existingItem != null)
+            {
+                existingItem.Quantity += quantity;
+            }
+            else
+            {
+                _context.Cart.Add(new Cart
+                {
+                    ProductId = productId,
+                    UserEmail = userEmail,
+                    Quantity = quantity,
+                    Details = details,
+                    DateCreated = DateTime.Now
+                });
+            }
+
+            await _context.SaveChangesAsync();
+            return Ok(new { success = true });
+        }
+
+        // 3. ПРЕМАХВАНЕ ОТ КОЛИЧКАТА
+        [HttpPost]
+        public async Task<IActionResult> RemoveFromCart(int id)
+        {
+            var userEmail = User.Identity?.Name;
+            var item = await _context.Cart.FirstOrDefaultAsync(c => c.Id == id && c.UserEmail == userEmail);
+
+            if (item != null)
+            {
+                _context.Cart.Remove(item);
+                await _context.SaveChangesAsync();
+                return Json(new { success = true });
+            }
+            return Json(new { success = false });
+        }
+
+        // 4. ПОКАЗВАНЕ НА СТРАНИЦАТА ЗА ПОРЪЧКА
+        [HttpGet]
+        public async Task<IActionResult> Order()
+        {
+            var userEmail = User.Identity?.Name;
+            var cartItems = await _context.Cart
+                .Include(c => c.Product)
+                .Where(c => c.UserEmail == userEmail)
+                .ToListAsync();
+
+            if (!cartItems.Any())
+            {
+                return RedirectToAction("Index");
+            }
+
+            return View(cartItems);
+        }
+
+        // 5. ФИНАЛИЗИРАНЕ НА ПОРЪЧКАТА (Коригиран за работа с базата данни)
+        [HttpPost]
+        public async Task<IActionResult> FinalizeOrder([FromBody] OrderRequest request)
+        {
+            var userEmail = User.Identity?.Name;
+            if (string.IsNullOrEmpty(userEmail)) return Unauthorized();
+
+            // Вземаме продуктите от SQL количката, а не от JS заявката
+            var cartItems = await _context.Cart
+                .Include(c => c.Product)
+                .Where(c => c.UserEmail == userEmail)
+                .ToListAsync();
+
+            if (!cartItems.Any())
+            {
+                return BadRequest(new { success = false, message = "Количката е празна в базата данни!" });
+            }
+
+            var order = new Orders
+            {
+                Email = userEmail,
+                FirstName = request.FirstName ?? "",
+                LastName = request.LastName ?? "",
+                CustomerName = $"{request.FirstName} {request.LastName}".Trim(),
+                Phone = request.Phone ?? "",
+                Address = request.Address ?? "",
+                City = request.City ?? "",
+                Comment = request.Comment ?? "",
+                CartJson = "[]",
+                TotalPrice = cartItems.Sum(i => (i.Product?.Price ?? 0) * i.Quantity),
+                OrderDate = DateTime.Now,
+                CreatedAt = DateTime.Now,
+                Status = "Нова",
+                OrderItems = cartItems.Select(i => new OrderItems
+                {
+                    ProductName = i.Product?.Name ?? "Продукт",
+                    Price = i.Product?.Price ?? 0,
+                    Quantity = i.Quantity,
+                    Image = i.Product?.ImageFileName ?? "",
+                    ConfigurationDetails = i.Details ?? "" // ТУК прехвърляме детайлите
+                }).ToList()
+            };
+
+            _context.Orders.Add(order);
+
+            // ИЗЧИСТВАМЕ КОЛИЧКАТА В БАЗАТА
+            _context.Cart.RemoveRange(cartItems);
+
+            await _context.SaveChangesAsync();
+            return Ok(new { success = true });
+        }
     }
 }

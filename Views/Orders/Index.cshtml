@@ -5,39 +5,60 @@
 }
 
 <div class="container mt-5">
-    <h2 class="text-danger fw-bold mb-3">Заявки</h2>
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2 class="text-danger fw-bold">Всички поръчки</h2>
+        <span class="badge bg-dark">Общо: @Model.Count()</span>
+    </div>
 
-    <table class="table table-striped table-bordered bg-white">
-        <thead>
-            <tr>
-                <th>#</th>
-                <th>Име</th>
-                <th>Телефон</th>
-                <th>Email</th>
-                <th>Дата</th>
-                <th></th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var o in Model)
-            {
+    <div class="table-responsive shadow-sm">
+        <table class="table table-hover table-bordered bg-white align-middle">
+            <thead class="table-dark">
                 <tr>
-                    <td>@o.Id</td>
-                    <td>@o.CustomerName</td>
-                    <td>@o.Phone</td>
-                    <td>@o.Email</td>
-                    @o.CreatedAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm")
-                    <td class="text-end">
-                        <a class="btn btn-sm btn-outline-dark" asp-action="Details" asp-route-id="@o.Id">Детайли</a>
-
-                        <form asp-action="Delete" asp-route-id="@o.Id" method="post" class="d-inline">
-                            @Html.AntiForgeryToken()
-                            <button class="btn btn-sm btn-outline-danger" type="submit">Изтрий</button>
-                        </form>
-                    </td>
+                    <th>#</th>
+                    <th>Име на клиент</th>
+                    <th>Телефон</th>
+                    <th>Email</th>
+                    <th>Дата</th>
+                    <th>Статус</th>
+                    <th class="text-center">Действия</th>
                 </tr>
-            }
-        </tbody>
-    </table>
-</div>
+            </thead>
+            <tbody>
+                @foreach (var o in Model)
+                {
+                    <tr>
+                        <td class="fw-bold">@o.Id</td>
+                        <td>@o.CustomerName</td>
+                        <td>@o.Phone</td>
+                        <td>@o.Email</td>
+                        <td>
+                            @* Коригирано: Вече е в <td> и ползваме OrderDate *@
+                            @o.OrderDate.ToString("dd.MM.yyyy HH:mm")
+                        </td>
+                        <td>
+                            @* Визуален статус *@
+                            <span class="badge @(o.Status == "Нова" ? "bg-primary" : "bg-success")">
+                                @o.Status
+                            </span>
+                        </td>
+                        <td class="text-center">
+                            <div class="btn-group">
+                                <a class="btn btn-sm btn-outline-dark" asp-action="Details" asp-route-id="@o.Id">
+                                    <i class="fas fa-search-plus"></i> Детайли
+                                </a>
 
+                                <form asp-action="Delete" asp-route-id="@o.Id" method="post"
+                                      class="d-inline" onsubmit="return confirm('Наистина ли искате да изтриете тази поръчка?')">
+                                    @Html.AntiForgeryToken()
+                                    <button class="btn btn-sm btn-outline-danger" type="submit">
+                                        <i class="fas fa-trash-alt"></i> Изтрий
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

@@ -1,23 +1,106 @@
 ﻿@model TKGroopBG.Models.Orders
 @{
-    ViewData["Title"] = $"Заявка #{Model.Id}";
+    ViewData["Title"] = $"Детайли за поръчка #{Model.Id}";
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
 
 <div class="container mt-5">
-    <h2 class="text-danger fw-bold mb-3">Заявка #@Model.Id</h2>
-
-    <div class="bg-white p-3 rounded shadow-sm">
-        <p><strong>Име:</strong> @Model.CustomerName</p>
-        <p><strong>Телефон:</strong> @Model.Phone</p>
-        <p><strong>Email:</strong> @Model.Email</p>
-        <p><strong>Адрес:</strong> @Model.Address</p>
-        <p><strong>Коментар:</strong> @Model.Comment</p>
-        <hr />
-        <p class="mb-2"><strong>Количка (JSON):</strong></p>
-        <pre style="white-space:pre-wrap">@Model.CartJson</pre>
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="text-danger fw-bold"><i class="fas fa-file-invoice"></i> Заявка #@Model.Id</h2>
+        <span class="badge bg-@(Model.Status == "Нова" ? "warning" : "success") fs-6 p-2">@Model.Status</span>
     </div>
 
-    <a asp-action="Index" class="btn btn-outline-secondary mt-3">Назад</a>
-</div>
+    <div class="row">
+        <div class="col-md-4">
+            <div class="card shadow-sm border-0 h-100">
+                <div class="card-header bg-dark text-white fw-bold">Данни за клиента</div>
+                <div class="card-body">
+                    <p class="mb-1 text-muted small">Име:</p>
+                    <h6 class="fw-bold">@Model.CustomerName</h6>
 
+                    <p class="mb-1 text-muted small mt-3">Телефон:</p>
+                    <h6 class="fw-bold"><i class="fas fa-phone-alt text-danger me-1"></i> @Model.Phone</h6>
+
+                    <p class="mb-1 text-muted small mt-3">Email:</p>
+                    <h6 class="fw-bold">@Model.Email</h6>
+
+                    <p class="mb-1 text-muted small mt-3">Адрес за доставка:</p>
+                    <h6 class="fw-bold">@Model.Address</h6>
+
+                    @if (!string.IsNullOrEmpty(Model.Comment))
+                    {
+                        <p class="mb-1 text-muted small mt-3">Коментар:</p>
+                        <div class="alert alert-secondary py-2 small">@Model.Comment</div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-8">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-danger text-white fw-bold">Продукти в поръчката</div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Продукт</th>
+                                    <th class="text-center">Количество</th>
+                                    <th class="text-end">Цена</th>
+                                    <th class="text-end">Общо</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var item in Model.OrderItems)
+                                {
+                                    <tr>
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                <img src="@(string.IsNullOrEmpty(item.Image) ? "/images/no-image.png" : item.Image)"
+                                                     class="rounded me-2" style="width: 50px; height: 50px; object-fit: cover;">
+                                                <div>
+                                                    <span class="fw-bold d-block">@item.ProductName</span>
+                                                    @if (!string.IsNullOrEmpty(item.ConfigurationDetails))
+                                                    {
+                                                        <small class="text-muted">@item.ConfigurationDetails</small>
+                                                    }
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td class="text-center">@item.Quantity</td>
+                                        <td class="text-end">@item.Price.ToString("F2") лв.</td>
+                                        <td class="text-end fw-bold">@((item.Price * item.Quantity).ToString("F2")) лв.</td>
+                                    </tr>
+                                }
+                            </tbody>
+                            <tfoot class="table-light">
+                                <tr>
+                                    <td colspan="3" class="text-end fw-bold">Крайна сума:</td>
+                                    <td class="text-end text-danger fw-bold fs-5">@Model.TotalPrice.ToString("F2") лв.</td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            @if (User.IsInRole("Admin"))
+            {
+                <div class="mt-4">
+                    <button class="btn btn-sm btn-link text-muted" type="button" data-bs-toggle="collapse" data-bs-target="#jsonCollapse">
+                        Покажи сурови данни (JSON)
+                    </button>
+                    <div class="collapse mt-2" id="jsonCollapse">
+                        <pre class="bg-light p-3 rounded border small">@Model.CartJson</pre>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+
+    <div class="mt-4 pb-5">
+        <a asp-action="Index" class="btn btn-outline-secondary rounded-pill px-4">
+            <i class="fas fa-arrow-left me-1"></i> Назад към поръчките
+        </a>
+    </div>
+</div>

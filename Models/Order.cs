@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-
-namespace TKGroopBG.Models
+﻿namespace TKGroopBG.Models
 {
     public class Order
     {

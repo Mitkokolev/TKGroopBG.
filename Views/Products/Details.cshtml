@@ -10,20 +10,21 @@
         ? fallback
         : Url.Content("~/product-images/" + Model.ImageFileName);
 
-    // Добавяме и IsCustomSize в JSON обекта за JS логиката
     var productJson = JsonSerializer.Serialize(new
     {
         id = Model.Id,
         name = Model.Name,
         basePrice = Model.Price,
         category = Model.Category,
-        isCustomSize = Model.IsCustomSize // ВАЖНО: Трябва да го има в модела
+        isCustomSize = Model.IsCustomSize
     });
 }
 
+@* Добавяме това тук, за да работи сигурността на заявката *@
+@Html.AntiForgeryToken()
+
 <div class="container mt-5 product-details-page">
     <div class="row gx-4">
-
         @* Лява част: Снимки *@
         <div class="col-lg-7">
             <div class="product-main-image-box shadow-sm mb-3 position-relative bg-white rounded p-2">
@@ -68,7 +69,7 @@
                     <small id="selectedColorLabel" class="d-block mt-2 text-danger fw-bold" style="font-size: 12px;"></small>
                 </div>
 
-                @* 2. Калкулатор за размери - Показва се САМО ако продуктът е Custom *@
+                @* 2. Калкулатор за размери *@
                 @if (Model.IsCustomSize)
                 {
                     <div class="row g-3 mb-4 bg-light p-3 rounded border">
@@ -84,7 +85,7 @@
                     </div>
                 }
 
-                @* 3. Варианти (Стъклопакети и др.) *@
+                @* 3. Варианти *@
                 @if (Model.Variants != null && Model.Variants.Any())
                 {
                     <div class="mb-4">
@@ -109,7 +110,6 @@
                         <h3 id="displayPrice" class="fw-bold mb-0">@Model.Price.ToString("0.00") лв.</h3>
                     </div>
 
-                    @* КОНТРОЛА ЗА БРОЙКИ *@
                     <div class="quantity-control d-flex align-items-center bg-white rounded-pill p-1">
                         <button class="btn btn-sm btn-light rounded-circle" onclick="changeQty(-1)"><i class="fas fa-minus text-dark"></i></button>
                         <input type="number" id="orderQty" class="form-control form-control-sm text-center border-0 fw-bold" value="1" min="1" style="width: 45px; pointer-events: none;">
@@ -122,7 +122,6 @@
                 </button>
             </div>
         </div>
-
     </div>
 </div>
 
@@ -169,7 +168,6 @@
         let selectedVariantName = "";
         let selectedColorName = "";
 
-        // Промяна на количеството
         function changeQty(val) {
             const qtyInput = document.getElementById('orderQty');
             let current = parseInt(qtyInput.value);
@@ -200,13 +198,9 @@
             const qty = parseInt(document.getElementById('orderQty').value);
             let finalUnitPrice = product.basePrice;
 
-            // Ако е по размери (CustomSize)
             if (product.isCustomSize) {
-                const hInput = document.getElementById('heightMm');
-                const wInput = document.getElementById('widthMm');
-                const h = parseFloat(hInput.value) || 0;
-                const w = parseFloat(wInput.value) || 0;
-
+                const h = parseFloat(document.getElementById('heightMm').value) || 0;
+                const w = parseFloat(document.getElementById('widthMm').value) || 0;
                 if (h > 0 && w > 0) {
                     const areaM2 = (h / 1000) * (w / 1000);
                     finalUnitPrice = (areaM2 * product.basePrice) + selectedVariantPrice;
@@ -215,7 +209,6 @@
                     return;
                 }
             } else {
-                // Ако е готов продукт
                 finalUnitPrice = product.basePrice + selectedVariantPrice;
             }
 
@@ -223,43 +216,54 @@
             document.getElementById('displayPrice').innerText = totalPrice.toFixed(2) + " лв.";
         }
 
-        document.getElementById('addToCartBtn').addEventListener('click', function() {
+        // КОРИГИРАНАТА ФУНКЦИЯ ЗА ДОБАВЯНЕ
+        document.getElementById('addToCartBtn').addEventListener('click', async function() {
             const qty = document.getElementById('orderQty').value;
 
-            // Проверка за размери само ако е Custom
             if (product.isCustomSize) {
                 const h = document.getElementById('heightMm').value;
                 const w = document.getElementById('widthMm').value;
-                if (!h || !w) {
-                    alert("Моля, въведете размери (височина и ширина)!");
-                    return;
+                if (!h || !w) { alert("Моля, въведете размери!"); return; }
+            }
+            if (!selectedColorName) { alert("Моля, изберете цвят!"); return; }
+
+            // Генерираме детайлите за продукта
+            const details = `Цвят: ${selectedColorName}${product.isCustomSize ? `, Размер: ${document.getElementById('widthMm').value}x${document.getElementById('heightMm').value}` : ""}${selectedVariantName ? `, Опция: ${selectedVariantName}` : ""}`;
+
+            // Подготвяме данните за сървъра
+            const formData = new URLSearchParams();
+            formData.append('productId', product.id);
+            formData.append('quantity', qty);
+            formData.append('details', details);
+
+            const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
+
+            try {
+                const response = await fetch('/Cart/AddToCart', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                        'RequestVerificationToken': token
+                    },
+                    body: formData
+                });
+
+                if (response.ok) {
+                    // Обновяваме локалната количка само за иконката
+                    let cart = JSON.parse(localStorage.getItem("tk_cart") || "[]");
+                    cart.push({ id: product.id, qty: parseInt(qty) });
+                    localStorage.setItem("tk_cart", JSON.stringify(cart));
+                    window.dispatchEvent(new Event('storage'));
+
+                    alert("Успешно добавено в количката!");
+                    window.location.href = '/Cart';
+                } else {
+                    alert("Моля, влезте в профила си, за да пазарувате.");
+                    window.location.href = '/Identity/Account/Login';
                 }
+            } catch (error) {
+                alert("Грешка при връзката със сървъра.");
             }
-
-            if (!selectedColorName) {
-                alert("Моля, изберете цвят!");
-                return;
-            }
-
-            // Тук добавяш към твоята localStorage количка
-            const cartItem = {
-                id: product.id,
-                name: product.name,
-                price: parseFloat(document.getElementById('displayPrice').innerText),
-                qty: parseInt(qty),
-                color: selectedColorName,
-                variant: selectedVariantName,
-                h: product.isCustomSize ? document.getElementById('heightMm').value : null,
-                w: product.isCustomSize ? document.getElementById('widthMm').value : null
-            };
-
-            // Примерно добавяне (ако ползваш масив tk_cart)
-            let cart = JSON.parse(localStorage.getItem("tk_cart") || "[]");
-            cart.push(cartItem);
-            localStorage.setItem("tk_cart", JSON.stringify(cart));
-
-            window.dispatchEvent(new Event('storage')); // Да обнови иконката в хедъра
-            alert("Успешно добавихте " + qty + " бр. в количката!");
         });
     </script>
 }

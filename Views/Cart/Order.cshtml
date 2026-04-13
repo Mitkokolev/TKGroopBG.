@@ -1,47 +1,87 @@
-﻿@model TKGroopBG.Models.OrderRequest
+﻿@model IEnumerable<TKGroopBG.Models.Cart>
+
+@{
+    ViewData["Title"] = "Завършване на поръчката";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    var totalPrice = Model.Sum(x => x.Quantity * (x.Product?.Price ?? 0));
+}
 
 <div class="container mt-5">
-    <h2>Завършване на поръчката</h2>
-    <form id="orderForm">
-        <div class="row">
-            <div class="col-md-6 mb-3">
-                <label>Име</label>
-                <input asp-for="FirstName" class="form-control" required />
+    <div class="row">
+        <div class="col-md-7">
+            <div class="card shadow-sm p-4 border-0">
+                <h4 class="mb-4"><i class="fas fa-truck text-danger"></i> Данни за доставка</h4>
+                <form id="orderForm">
+                    @Html.AntiForgeryToken()
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-bold">Име</label>
+                            <input type="text" id="FirstName" class="form-control" required placeholder="Иван" />
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-bold">Фамилия</label>
+                            <input type="text" id="LastName" class="form-control" required placeholder="Иванов" />
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Телефон</label>
+                        <input type="tel" id="Phone" class="form-control" required placeholder="0888 123 456" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Имейл</label>
+                        <input type="email" id="Email" class="form-control" value="@User.Identity.Name" readonly />
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-bold">Град</label>
+                            <input type="text" id="City" class="form-control" required placeholder="София" />
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-bold">Адрес</label>
+                            <input type="text" id="Address" class="form-control" required placeholder="ул. Примерна 1, ет. 2" />
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label fw-bold">Бележка към поръчката (незадължително)</label>
+                        <textarea id="Comment" class="form-control" rows="3" placeholder="Допълнителни инструкции..."></textarea>
+                    </div>
+
+                    <button type="submit" id="submitBtn" class="btn btn-danger btn-lg w-100 fw-bold shadow">
+                        ПОТВЪРДИ ПОРЪЧКАТА
+                    </button>
+                </form>
             </div>
-            <div class="col-md-6 mb-3">
-                <label>Фамилия</label>
-                <input asp-for="LastName" class="form-control" required />
+        </div>
+
+        <div class="col-md-5">
+            <div class="card shadow-sm p-4 border-0 bg-light">
+                <h5 class="mb-3 fw-bold">Твоята поръчка</h5>
+                <hr />
+                <div class="order-summary-list mb-3">
+                    @foreach (var item in Model)
+                    {
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <div>
+                                <span class="fw-bold">@item.Product.Name</span>
+                                <small class="d-block text-muted">@item.Details x @item.Quantity</small>
+                            </div>
+                            <span class="text-dark">@((item.Product.Price * item.Quantity).ToString("F2")) лв.</span>
+                        </div>
+                    }
+                </div>
+                <hr />
+                <div class="d-flex justify-content-between align-items-center">
+                    <span class="h5 mb-0">Общо:</span>
+                    <span class="h4 mb-0 text-danger fw-bold">@totalPrice.ToString("F2") лв.</span>
+                </div>
             </div>
         </div>
-
-        <div class="mb-3">
-            <label>Телефон</label>
-            <input asp-for="Phone" class="form-control" required />
-        </div>
-
-        <div class="mb-3">
-            <label>Имейл</label>
-            <input asp-for="Email" class="form-control" required />
-        </div>
-
-        <div class="row">
-            <div class="col-md-6 mb-3">
-                <label>Град</label>
-                <input asp-for="City" class="form-control" required />
-            </div>
-            <div class="col-md-6 mb-3">
-                <label>Адрес</label>
-                <input asp-for="Address" class="form-control" required />
-            </div>
-        </div>
-
-        <div class="mb-3">
-            <label>Бележка към поръчката</label>
-            <textarea asp-for="Note" class="form-control" rows="3"></textarea>
-        </div>
-
-        <button type="submit" class="btn btn-primary btn-lg w-100">Изпрати поръчката</button>
-    </form>
+    </div>
 </div>
 
 @section Scripts {
@@ -49,43 +89,51 @@
         document.getElementById('orderForm').addEventListener('submit', async function (e) {
             e.preventDefault();
 
-            const cart = JSON.parse(localStorage.getItem('tk_cart') || '[]');
-            if (cart.length === 0) {
-                alert('Количката е празна!');
-                return;
-            }
+            const btn = document.getElementById('submitBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Изпращане...';
 
-            const formData = {
+            // Събираме данните от формата
+            // Продуктите ще ги вземем в контролера от базата, за по-голяма сигурност
+            const orderData = {
                 firstName: document.getElementById('FirstName').value,
                 lastName: document.getElementById('LastName').value,
                 email: document.getElementById('Email').value,
                 phone: document.getElementById('Phone').value,
                 address: document.getElementById('Address').value,
                 city: document.getElementById('City').value,
-                note: document.getElementById('Note').value,
-                items: cart.map(item => ({
-                    productName: item.productName,
-                    price: item.price,
-                    image: item.image,
-                    details: item.details
-                }))
+                comment: document.getElementById('Comment').value,
+                // Изпращаме празен масив за items, контролерът ще си ги зареди сам
+                items: []
             };
 
-            const response = await fetch('/Cart/Order', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
-                },
-                body: JSON.stringify(formData)
-            });
+            const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
 
-            if (response.ok) {
-                localStorage.removeItem('tk_cart');
-                alert('Поръчката е приета!');
-                window.location.href = '/';
-            } else {
-                alert('Грешка при изпращане.');
+            try {
+                // Използваме маршрута, който дефинирахме в контролера
+                const response = await fetch('/Cart/FinalizeOrder', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'RequestVerificationToken': token
+                    },
+                    body: JSON.stringify(orderData)
+                });
+
+                if (response.ok) {
+                    localStorage.removeItem('tk_cart'); // Изчистваме и локалната икона
+                    alert('Благодарим Ви! Поръчката Ви е приета успешно.');
+                    window.location.href = '/'; // Или към MyOrders, ако имаш такъв контролер
+                } else {
+                    alert('Възникна грешка при обработката. Моля, проверете данните.');
+                    btn.disabled = false;
+                    btn.innerText = 'ПОТВЪРДИ ПОРЪЧКАТА';
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Грешка при връзката със сървъра.');
+                btn.disabled = false;
+                btn.innerText = 'ПОТВЪРДИ ПОРЪЧКАТА';
             }
         });
     </script>
