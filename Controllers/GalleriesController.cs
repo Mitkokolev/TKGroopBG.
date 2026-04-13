@@ -5,13 +5,11 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.IO;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using TKGroopBG.Data;
 using TKGroopBG.Models;
+using Microsoft.AspNetCore.Http;
 
 namespace TKGroopBG.Controllers
 {
@@ -26,7 +24,7 @@ namespace TKGroopBG.Controllers
             _env = env;
         }
 
-        // GET: Galleries (видима за всички)
+        // GET: Galleries
         [AllowAnonymous]
         public async Task<IActionResult> Index()
         {
@@ -34,13 +32,14 @@ namespace TKGroopBG.Controllers
             return View(items);
         }
 
-        // GET: Galleries/Details/5 (видима за всички)
+        // GET: Galleries/Details/5
         [AllowAnonymous]
         public async Task<IActionResult> Details(int? id)
         {
             if (id == null) return NotFound();
 
             var gallery = await _context.Gallery
+                .Include(g => g.Images)
                 .AsNoTracking()
                 .FirstOrDefaultAsync(m => m.Id == id);
 
@@ -49,37 +48,49 @@ namespace TKGroopBG.Controllers
             return View(gallery);
         }
 
-        // GET: Galleries/Create (само админ)
+        // GET: Galleries/Create
         [Authorize(Roles = "Admin")]
         public IActionResult Create()
         {
             return View();
         }
 
-        // POST: Galleries/Create (само админ)
+        // POST: Galleries/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
         [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> Create(Gallery gallery, IFormFile? imageFile)
+        public async Task<IActionResult> Create(Gallery gallery, List<IFormFile> imageFiles)
         {
             if (!ModelState.IsValid)
                 return View(gallery);
 
-            if (imageFile != null && imageFile.Length > 0)
+            var uploadsRoot = Path.Combine(_env.WebRootPath, "gallery-images");
+            Directory.CreateDirectory(uploadsRoot);
+
+            if (imageFiles != null && imageFiles.Count > 0)
             {
-                var uploadsRoot = Path.Combine(_env.WebRootPath, "gallery-images");
-                Directory.CreateDirectory(uploadsRoot);
-
-                var ext = Path.GetExtension(imageFile.FileName);
-                var fileName = $"{Guid.NewGuid()}{ext}";
-                var filePath = Path.Combine(uploadsRoot, fileName);
-
-                using (var stream = System.IO.File.Create(filePath))
+                for (int i = 0; i < imageFiles.Count; i++)
                 {
-                    await imageFile.CopyToAsync(stream);
-                }
+                    var file = imageFiles[i];
+                    if (file.Length > 0)
+                    {
+                        var ext = Path.GetExtension(file.FileName);
+                        var fileName = $"{Guid.NewGuid()}{ext}";
+                        var filePath = Path.Combine(uploadsRoot, fileName);
 
-                gallery.ImageFileName = fileName;
+                        using (var stream = System.IO.File.Create(filePath))
+                        {
+                            await file.CopyToAsync(stream);
+                        }
+
+                        if (i == 0)
+                        {
+                            gallery.ImageFileName = fileName;
+                        }
+
+                        gallery.Images.Add(new GalleryImage { FileName = fileName });
+                    }
+                }
             }
 
             _context.Add(gallery);
@@ -87,45 +98,54 @@ namespace TKGroopBG.Controllers
             return RedirectToAction(nameof(Index));
         }
 
-        // GET: Galleries/Edit/5 (само админ)
+        // GET: Galleries/Edit/5
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Edit(int? id)
         {
             if (id == null) return NotFound();
 
-            var gallery = await _context.Gallery.FindAsync(id);
+            var gallery = await _context.Gallery.Include(g => g.Images).FirstOrDefaultAsync(g => g.Id == id);
             if (gallery == null) return NotFound();
 
             return View(gallery);
         }
 
-        // POST: Galleries/Edit/5 (само админ)
+        // POST: Galleries/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
         [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> Edit(int id, Gallery gallery, IFormFile? imageFile)
+        public async Task<IActionResult> Edit(int id, Gallery gallery, List<IFormFile>? imageFiles)
         {
             if (id != gallery.Id) return NotFound();
 
             if (!ModelState.IsValid)
                 return View(gallery);
 
-            // ако има нов файл – качваме и сменяме
-            if (imageFile != null && imageFile.Length > 0)
+            var uploadsRoot = Path.Combine(_env.WebRootPath, "gallery-images");
+            Directory.CreateDirectory(uploadsRoot);
+
+            if (imageFiles != null && imageFiles.Count > 0)
             {
-                var uploadsRoot = Path.Combine(_env.WebRootPath, "gallery-images");
-                Directory.CreateDirectory(uploadsRoot);
-
-                var ext = Path.GetExtension(imageFile.FileName);
-                var fileName = $"{Guid.NewGuid()}{ext}";
-                var filePath = Path.Combine(uploadsRoot, fileName);
-
-                using (var stream = System.IO.File.Create(filePath))
+                foreach (var file in imageFiles)
                 {
-                    await imageFile.CopyToAsync(stream);
-                }
+                    if (file.Length > 0)
+                    {
+                        var ext = Path.GetExtension(file.FileName);
+                        var fileName = $"{Guid.NewGuid()}{ext}";
+                        var filePath = Path.Combine(uploadsRoot, fileName);
 
-                gallery.ImageFileName = fileName;
+                        using (var stream = System.IO.File.Create(filePath))
+                        {
+                            await file.CopyToAsync(stream);
+                        }
+
+                        _context.GalleryImages.Add(new GalleryImage
+                        {
+                            FileName = fileName,
+                            GalleryId = gallery.Id
+                        });
+                    }
+                }
             }
 
             try
@@ -143,7 +163,7 @@ namespace TKGroopBG.Controllers
             return RedirectToAction(nameof(Index));
         }
 
-        // GET: Galleries/Delete/5 (само админ)
+        // GET: Galleries/Delete/5
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Delete(int? id)
         {
@@ -158,20 +178,56 @@ namespace TKGroopBG.Controllers
             return View(gallery);
         }
 
-        // POST: Galleries/Delete/5 (само админ)
+        // POST: Galleries/Delete/5
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            var gallery = await _context.Gallery.FindAsync(id);
+            var gallery = await _context.Gallery.Include(g => g.Images).FirstOrDefaultAsync(g => g.Id == id);
             if (gallery != null)
             {
+                foreach (var img in gallery.Images)
+                {
+                    var filePath = Path.Combine(_env.WebRootPath, "gallery-images", img.FileName);
+                    if (System.IO.File.Exists(filePath)) System.IO.File.Delete(filePath);
+                }
+
                 _context.Gallery.Remove(gallery);
                 await _context.SaveChangesAsync();
             }
 
             return RedirectToAction(nameof(Index));
+        }
+
+        // AJAX POST: Galleries/DeleteImage/5
+        [HttpPost]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> DeleteImage(int id)
+        {
+            var image = await _context.GalleryImages.FindAsync(id);
+            if (image == null)
+            {
+                return Json(new { success = false, message = "Снимката не е намерена." });
+            }
+
+            try
+            {
+                var filePath = Path.Combine(_env.WebRootPath, "gallery-images", image.FileName);
+                if (System.IO.File.Exists(filePath))
+                {
+                    System.IO.File.Delete(filePath);
+                }
+
+                _context.GalleryImages.Remove(image);
+                await _context.SaveChangesAsync();
+
+                return Json(new { success = true });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = ex.Message });
+            }
         }
     }
 }

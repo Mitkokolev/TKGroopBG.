@@ -17,6 +17,7 @@ namespace TKGroopBG.Data
         public DbSet<Orders> Orders { get; set; }
         public DbSet<OrderItems> OrderItems { get; set; }
         public DbSet<Cart> Carts { get; set; }
+        public DbSet<TKGroopBG.Models.GalleryImage> GalleryImages { get; set; }
 
         // Новите таблици за разширената функционалност
         public DbSet<ProductImage> ProductImages { get; set; }

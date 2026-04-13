@@ -5,90 +5,137 @@
     ViewData["Title"] = "Създай продукт";
 }
 
-<h2 class="text-danger fw-bold mb-3">Създаване на продукт</h2>
-<hr />
-
-<div class="row">
-    <div class="col-md-8">
-        <form asp-action="Create" enctype="multipart/form-data" id="productForm">
-            <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
-
-            <div class="card mb-4 shadow-sm">
-                <div class="card-header bg-light fw-bold">Основна информация</div>
-                <div class="card-body">
-                    <div class="form-group mb-3">
-                        <label asp-for="Name" class="control-label">Име на продукт</label>
-                        <input asp-for="Name" class="form-control" />
-                        <span asp-validation-for="Name" class="text-danger"></span>
-                    </div>
-
-                    <div class="form-group mb-3">
-                        <label asp-for="Description" class="control-label">Описание</label>
-                        <textarea asp-for="Description" class="form-control" rows="3"></textarea>
-                        <span asp-validation-for="Description" class="text-danger"></span>
-                    </div>
-
-                    <div class="row">
-                        <div class="col-md-6 form-group mb-3">
-                            <label asp-for="Price" class="control-label">Базова цена (на м²)</label>
-                            <input asp-for="Price" class="form-control" type="number" step="0.01" />
-                            <span asp-validation-for="Price" class="text-danger"></span>
-                        </div>
-                        <div class="col-md-6 form-group mb-4">
-                            <label class="control-label">Категория</label>
-                            <select asp-for="Category" class="form-control" asp-items="@(new SelectList(ViewBag.Categories))">
-                                <option value="">-- избери категория --</option>
-                            </select>
-                            <span asp-validation-for="Category" class="text-danger"></span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="card mb-4 shadow-sm">
-                <div class="card-header bg-light fw-bold">Обща Галерия</div>
-                <div class="card-body">
-                    <div class="form-group mb-3">
-                        <label class="control-label fw-bold">Главна снимка (Placeholder)</label>
-                        <input type="file" name="imageFile" class="form-control" />
-                    </div>
-                    <div class="form-group mb-3">
-                        <label class="control-label fw-bold">Допълнителни снимки</label>
-                        <input type="file" name="galleryFiles" multiple class="form-control" />
-                    </div>
-                </div>
-            </div>
-
-            <div class="card mb-4 shadow-sm border-primary">
-                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
-                    <span class="fw-bold">Варианти (напр. Стъклопакети)</span>
-                    <button type="button" class="btn btn-sm btn-light" onclick="addVariant()">+ Добави</button>
-                </div>
-                <div class="card-body">
-                    <div id="variantsContainer"></div>
-                    <input type="hidden" name="variantsJson" id="variantsJson" />
-                </div>
-            </div>
-
-            <div class="card mb-4 shadow-sm border-dark">
-                <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
-                    <span class="fw-bold">Цветове и Снимки към тях</span>
-                    <button type="button" class="btn btn-sm btn-outline-light" onclick="addColor()">+ Добави цвят</button>
-                </div>
-                <div class="card-body">
-                    <div id="colorsContainer">
-                    </div>
-                    <input type="hidden" name="colorsJson" id="colorsJson" />
-                    <small class="text-muted">За всеки добавен цвят трябва да изберете съответната снимка, за да работи превключването в сайта.</small>
-                </div>
-            </div>
-
-            <div class="form-group mb-5">
-                <input type="submit" value="Запази продукта" class="btn btn-danger btn-lg" onclick="prepareJson()" />
-                <a asp-action="Index" class="btn btn-outline-secondary btn-lg ms-2">Назад</a>
-            </div>
-        </form>
+<div class="container py-4">
+    <div class="d-flex align-items-center mb-4">
+        <a asp-action="Index" class="btn btn-outline-secondary rounded-circle me-3" title="Назад">
+            <i class="fas fa-arrow-left"></i>
+        </a>
+        <h2 class="text-danger fw-bold mb-0">Създаване на нов продукт</h2>
     </div>
+
+    <form asp-action="Create" enctype="multipart/form-data" id="productForm">
+        <div asp-validation-summary="ModelOnly" class="alert alert-danger mb-4 shadow-sm" role="alert"></div>
+
+        <div class="row">
+            <div class="col-lg-7">
+                <div class="card mb-4 shadow-sm border-0 bg-white">
+                    <div class="card-header bg-dark text-white py-3">
+                        <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i>Основна информация</h5>
+                    </div>
+                    <div class="card-body p-4">
+                        <div class="form-group mb-3">
+                            <label asp-for="Name" class="form-label fw-bold">Име на продукта</label>
+                            <input asp-for="Name" class="form-control form-control-lg border-2" placeholder="напр. Алуминиева дограма серия X" />
+                            <span asp-validation-for="Name" class="text-danger"></span>
+                        </div>
+
+                        <div class="form-group mb-3">
+                            <label asp-for="Description" class="form-label fw-bold">Описание</label>
+                            <textarea asp-for="Description" class="form-control border-2" rows="4" placeholder="Кратко представяне на продукта..."></textarea>
+                            <span asp-validation-for="Description" class="text-danger"></span>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="Price" class="form-label fw-bold">Базова цена (лв.)</label>
+                                <div class="input-group border-2">
+                                    <span class="input-group-text bg-light">лв.</span>
+                                    <input asp-for="Price" class="form-control border-2" type="number" step="0.01" value="0.00" />
+                                </div>
+                                <small class="text-muted">Ако е "По поръчка", това е цена за м².</small>
+                                <span asp-validation-for="Price" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-bold">Категория</label>
+                                <select asp-for="Category" class="form-select border-2" asp-items="@(new SelectList(ViewBag.Categories))">
+                                    <option value="">-- Избери категория --</option>
+                                </select>
+                                <span asp-validation-for="Category" class="text-danger"></span>
+                            </div>
+                        </div>
+
+                        <hr />
+                        <div class="row align-items-center bg-light p-3 rounded mx-0">
+                            <div class="col-md-7 mb-3 mb-md-0">
+                                <label class="form-label fw-bold mb-1"><i class="fas fa-calculator me-1"></i> Тип на продукта</label>
+                                <div class="form-check form-switch p-0">
+                                    <div class="d-flex align-items-center">
+                                        <input asp-for="IsCustomSize" class="form-check-input ms-0 me-2" type="checkbox" style="width: 3rem; height: 1.5rem;">
+                                        <label class="form-check-label fw-bold text-primary" for="IsCustomSize">Продукт по Ваши размери (мм)</label>
+                                    </div>
+                                </div>
+                                <small class="text-muted d-block mt-1">Включва калкулатора за височина и ширина в сайта.</small>
+                            </div>
+                            <div class="col-md-5 border-start">
+                                <label asp-for="StockQuantity" class="form-label fw-bold mb-1">Начално количество</label>
+                                <input asp-for="StockQuantity" class="form-control" type="number" min="1" value="1" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card mb-4 shadow-sm border-0 bg-white">
+                    <div class="card-header bg-secondary text-white py-3">
+                        <h5 class="mb-0"><i class="fas fa-images me-2"></i>Обща Галерия</h5>
+                    </div>
+                    <div class="card-body p-4">
+                        <div class="mb-4">
+                            <label class="form-label fw-bold text-primary"><i class="fas fa-star me-1"></i>Главна снимка (Витрина)</label>
+                            <input type="file" name="imageFile" class="form-control border-2" accept="image/*" />
+                        </div>
+                        <div>
+                            <label class="form-label fw-bold"><i class="fas fa-plus-square me-1"></i>Допълнителни снимки</label>
+                            <input type="file" name="galleryFiles" multiple class="form-control border-2" accept="image/*" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-5">
+                <div class="card mb-4 shadow-sm border-0 border-start border-primary border-4">
+                    <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center py-3">
+                        <h5 class="mb-0"><i class="fas fa-layer-group me-2"></i>Варианти</h5>
+                        <button type="button" class="btn btn-sm btn-light rounded-pill px-3" onclick="addVariant()">
+                            <i class="fas fa-plus"></i> Добави
+                        </button>
+                    </div>
+                    <div class="card-body bg-light p-3">
+                        <div id="variantsContainer"></div>
+                        <input type="hidden" name="variantsJson" id="variantsJson" />
+                        <div id="noVariantsHint" class="text-center text-muted py-3">
+                            <small>Няма добавени варианти (напр. стъклопакети).</small>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card mb-4 shadow-sm border-0 border-start border-dark border-4">
+                    <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center py-3">
+                        <h5 class="mb-0"><i class="fas fa-palette me-2"></i>Цветове</h5>
+                        <button type="button" class="btn btn-sm btn-outline-light rounded-pill px-3" onclick="addColor()">
+                            <i class="fas fa-plus"></i> Добави цвят
+                        </button>
+                    </div>
+                    <div class="card-body bg-light p-3">
+                        <div id="colorsContainer"></div>
+                        <input type="hidden" name="colorsJson" id="colorsJson" />
+                        <div class="alert alert-info py-2 px-3 mt-2 mb-0" style="font-size: 0.8rem;">
+                            <i class="fas fa-info-circle"></i> Качете снимка за всеки цвят.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="sticky-top pt-2" style="top: 20px; z-index: 10;">
+                    <div class="card shadow-lg border-0 bg-danger text-white">
+                        <div class="card-body p-4 text-center">
+                            <button type="submit" class="btn btn-light btn-lg w-100 fw-bold rounded-pill text-danger shadow" onclick="prepareJson()">
+                                <i class="fas fa-save me-2"></i>ЗАПАЗИ ПРОДУКТА
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
 </div>
 
 @section Scripts {
@@ -97,69 +144,98 @@
     }
 
     <script>
-        // ЛОГИКА ЗА ВАРИАНТИ
+        // Същите функции addVariant, addColor, removeRow и prepareJson от предния дизайн
         function addVariant() {
+            document.getElementById('noVariantsHint').style.display = 'none';
             const container = document.getElementById('variantsContainer');
             const html = `
-                <div class="row mb-2 variant-row border-bottom pb-2">
-                    <div class="col-md-7">
-                        <input type="text" placeholder="Име (напр. Троен стъклопакет)" class="form-control variant-name" />
-                    </div>
-                    <div class="col-md-4">
-                        <input type="number" step="0.01" placeholder="Доп. цена" class="form-control variant-price" />
-                    </div>
-                    <div class="col-md-1">
-                        <button type="button" class="btn btn-outline-danger btn-sm" onclick="this.parentElement.parentElement.remove()">X</button>
+                <div class="variant-item bg-white p-2 rounded border mb-2 shadow-sm animate__animated animate__fadeIn">
+                    <div class="row g-2 align-items-center">
+                        <div class="col-7">
+                            <input type="text" placeholder="Име (напр. Троен)" class="form-control form-control-sm variant-name" />
+                        </div>
+                        <div class="col-3">
+                            <input type="number" step="0.01" placeholder="+0 лв." class="form-control form-control-sm variant-price" />
+                        </div>
+                        <div class="col-2 text-end">
+                            <button type="button" class="btn btn-outline-danger btn-sm border-0" onclick="removeRow(this, 'noVariantsHint')">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
                     </div>
                 </div>`;
             container.insertAdjacentHTML('beforeend', html);
         }
 
-        // ЛОГИКА ЗА ЦВЕТОВЕ
         function addColor() {
             const container = document.getElementById('colorsContainer');
             const html = `
-                <div class="row mb-3 align-items-center color-row border-bottom pb-2">
-                    <div class="col-md-3">
-                        <input type="text" placeholder="Име (напр. Кафяв)" class="form-control color-name" />
+                <div class="color-item bg-white p-3 rounded border mb-3 shadow-sm animate__animated animate__fadeIn">
+                    <div class="row g-2 mb-2">
+                        <div class="col-9">
+                            <input type="text" placeholder="Име (напр. Златен дъб)" class="form-control form-control-sm color-name" />
+                        </div>
+                        <div class="col-3">
+                            <input type="color" class="form-control form-control-color form-control-sm w-100 color-hex" value="#4b2c20">
+                        </div>
                     </div>
-                    <div class="col-md-2">
-                        <input type="color" class="form-control form-control-color w-100 color-hex" value="#4b2c20" title="Избери визуален цвят">
-                    </div>
-                    <div class="col-md-6">
-                        <label class="small text-muted d-block">Снимка за този цвят:</label>
-                        <input type="file" name="colorFiles" class="form-control color-file" required />
-                    </div>
-                    <div class="col-md-1 text-end">
-                        <button type="button" class="btn btn-danger btn-sm" onclick="this.parentElement.parentElement.remove()">X</button>
+                    <div class="row g-2 align-items-center">
+                        <div class="col-10">
+                            <input type="file" name="colorFiles" class="form-control form-control-sm color-file" required />
+                        </div>
+                        <div class="col-2 text-end">
+                            <button type="button" class="btn btn-outline-danger btn-sm border-0" onclick="removeRow(this)">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
                     </div>
                 </div>`;
             container.insertAdjacentHTML('beforeend', html);
         }
 
-        // ПОДГОТОВКА НА ДАННИТЕ ЗА КОНТРОЛЕРА
+        function removeRow(btn, hintId) {
+            btn.closest('.variant-item, .color-item').remove();
+            if (hintId && document.getElementById('variantsContainer').children.length === 0) {
+                document.getElementById(hintId).style.display = 'block';
+            }
+        }
+
         function prepareJson() {
-            // Варианти
             const variants = [];
-            document.querySelectorAll('.variant-row').forEach(row => {
-                const name = row.querySelector('.variant-name').value;
-                const price = row.querySelector('.variant-price').value;
-                if (name) {
-                    variants.push({ Name: name, AdditionalPrice: parseFloat(price) || 0 });
-                }
+            document.querySelectorAll('.variant-item').forEach(item => {
+                const name = item.querySelector('.variant-name').value;
+                const price = item.querySelector('.variant-price').value;
+                if (name) variants.push({ Name: name, AdditionalPrice: parseFloat(price) || 0 });
             });
             document.getElementById('variantsJson').value = JSON.stringify(variants);
 
-            // Цветове
             const colors = [];
-            document.querySelectorAll('.color-row').forEach(row => {
-                const name = row.querySelector('.color-name').value;
-                const hex = row.querySelector('.color-hex').value;
-                if (name) {
-                    colors.push({ ColorName: name, ColorHex: hex });
-                }
+            document.querySelectorAll('.color-item').forEach(item => {
+                const name = item.querySelector('.color-name').value;
+                const hex = item.querySelector('.color-hex').value;
+                if (name) colors.push({ ColorName: name, ColorHex: hex });
             });
             document.getElementById('colorsJson').value = JSON.stringify(colors);
         }
     </script>
+
+    <style>
+        .form-control:focus, .form-select:focus, .form-check-input:focus {
+            border-color: #dc3545;
+            box-shadow: 0 0 0 0.25rem rgba(220, 53, 69, 0.15);
+        }
+
+        .form-check-input:checked {
+            background-color: #dc3545;
+            border-color: #dc3545;
+        }
+
+        .card {
+            border-radius: 12px;
+        }
+
+        .animate__animated {
+            animation-duration: 0.4s;
+        }
+    </style>
 }

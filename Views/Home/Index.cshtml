@@ -3,31 +3,129 @@
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
 
+<style>
+    /* Основен контейнер */
+    .hero-main-container {
+        position: relative;
+        width: 100%;
+        min-height: 100vh;
+        overflow: hidden;
+        background-color: #fff; /* Бял фон като основа */
+    }
 
-<section class="home-hero fade-up" role="region" aria-label="Начална секция">
-    <div class="hero-wrap">
-        <div class="hero-logo">
-            <div class="logo-icon">
-                <div class="tk-symbol" aria-hidden="true">
-                    <span class="t">T</span><span class="k">K</span>
-                    <div class="arc"></div>
-                </div>
-            </div>
-            <h1 class="logo-text">TKGroopBG</h1>
-            <h3 class="logo-subtext">INDUSTRIAL SOLUTIONS</h3>
+    /* Фонов слой с крановете */
+    .hero-bg-layer {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-image: url('/images/cranes.jpg');
+        background-attachment: fixed;
+        /* Използваме 'cover', но с по-високо качество и фиксирана позиция */
+        background-size: cover;
+        background-position: center bottom;
+        background-repeat: no-repeat;
+        z-index: 1;
+        opacity: 1; /* Връщаме пълна видимост на картинката */
+    }
+
+        /* Филтърът, който изсветлява фона, за да прилича на стария дизайн */
+        .hero-bg-layer::after {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(255, 255, 255, 0.85); /* Поддържа усещането за чистота */
+            z-index: 2;
+        }
+
+    /* Слой за съдържанието */
+    .hero-content-wrap {
+        position: relative;
+        z-index: 10;
+        padding-top: 80px;
+    }
+
+    /* Връщаме оригиналния стил на логото */
+    .old-logo-style {
+        background-color: #A31E23;
+        color: white;
+        width: 120px;
+        height: 120px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto;
+        font-size: 3rem;
+        font-weight: bold;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
+
+    /* ВРЪЩАНЕ НА СТАРИЯ ДИЗАЙН НА КАРТИТЕ */
+    .old-menu-card {
+        position: relative;
+        display: block;
+        border-radius: 25px; /* Силно заобляне като преди */
+        overflow: hidden;
+        box-shadow: 0 15px 35px rgba(0,0,0,0.2);
+        transition: transform 0.3s ease;
+        border: none;
+        height: 350px;
+    }
+
+        .old-menu-card:hover {
+            transform: scale(1.02);
+        }
+
+    .old-card-img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover; /* Предотвратява разтягането на снимките в картите */
+    }
+
+    /* Черната лента с текст върху снимката */
+    .old-card-overlay {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        background: rgba(0, 0, 0, 0.6); /* Полупрозрачна черна лента */
+        color: white;
+        padding: 15px;
+        text-align: center;
+        font-weight: bold;
+        font-size: 1.2rem;
+    }
+</style>
+
+<div class="hero-main-container">
+    <div class="hero-bg-layer"></div>
+
+    <div class="hero-content-wrap container">
+        <div class="text-center mb-5">
+            <div class="old-logo-style">TK</div>
+            <h1 class="fw-bold mt-3" style="color: #000; letter-spacing: -1px;">TKGroopBG</h1>
+            <p style="color: #A31E23; font-weight: bold; letter-spacing: 2px;">INDUSTRIAL SOLUTIONS</p>
         </div>
 
-        <div class="home-grid">
-            <a asp-controller="Products" asp-action="Index" class="menu-card fade-up" style="animation-delay:.05s">
-                <img src="~/images/products.jpg" class="card-img" alt="Продукти">
-                <div class="card-overlay">Продукти</div>
-            </a>
+        <div class="row justify-content-center gx-5">
+            <div class="col-md-5 mb-5">
+                <a asp-controller="Products" asp-action="Index" class="old-menu-card">
+                    <img src="~/images/products.jpg" class="old-card-img" alt="Продукти">
+                    <div class="old-card-overlay">Продукти</div>
+                </a>
+            </div>
 
-            <a asp-controller="Galleries" asp-action="Index" class="menu-card fade-up" style="animation-delay:.1s">
-                <img src="~/images/gallery.jpg" class="card-img" alt="Галерия">
-                <div class="card-overlay">Галерия</div>
-            </a>
+            <div class="col-md-5 mb-5">
+                <a asp-controller="Galleries" asp-action="Index" class="old-menu-card">
+                    <img src="~/images/gallery.jpg" class="old-card-img" alt="Галерия">
+                    <div class="old-card-overlay">Галерия</div>
+                </a>
+            </div>
         </div>
     </div>
-</section>
-
+</div>

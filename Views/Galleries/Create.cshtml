@@ -1,38 +1,45 @@
 ﻿@model TKGroopBG.Models.Gallery
 
 @{
-    ViewData["Title"] = "Добави снимка";
+    ViewData["Title"] = "Добави нов проект";
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
 
 <div class="container mt-5">
-    <h2 class="text-danger fw-bold mb-3">Нова снимка в галерията</h2>
+    <h2 class="text-danger fw-bold mb-3">Добавяне на нов проект в галерията</h2>
+    <p class="text-muted">Можете да качите до 6 или повече снимки за този проект.</p>
     <hr />
 
     <div class="row">
-        <div class="col-md-6">
-            <form asp-action="Create" enctype="multipart/form-data">
+        <div class="col-md-8">
+            <form asp-action="Create" enctype="multipart/form-data" method="post">
                 <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
 
                 <div class="mb-3">
-                    <label asp-for="Title" class="form-label">Заглавие</label>
-                    <input asp-for="Title" class="form-control" />
+                    <label asp-for="Title" class="form-label fw-bold">Заглавие на обекта</label>
+                    <input asp-for="Title" class="form-control" placeholder="напр. Болница 'Света Анна'" />
                     <span asp-validation-for="Title" class="text-danger"></span>
                 </div>
 
                 <div class="mb-3">
-                    <label asp-for="Description" class="form-label">Описание</label>
-                    <textarea asp-for="Description" class="form-control" rows="3"></textarea>
+                    <label asp-for="Description" class="form-label fw-bold">Описание и използвани материали</label>
+                    <textarea asp-for="Description" class="form-control" rows="6" placeholder="Опишете детайлите по проекта и материалите, които сте използвали..."></textarea>
                     <span asp-validation-for="Description" class="text-danger"></span>
                 </div>
 
-                <div class="mb-4">
-                    <label class="form-label">Снимка</label>
-                    <input type="file" name="imageFile" class="form-control" accept="image/*" />
+                <div class="mb-4 p-3 border rounded bg-light">
+                    <label class="form-label fw-bold text-danger">Избери снимки (можеш да избереш няколко)</label>
+                    <input type="file" name="imageFiles" class="form-control" accept="image/*" multiple required />
+                    <small class="text-muted d-block mt-2">
+                        * Задръжте <strong>Ctrl</strong> (или Cmd на Mac), за да изберете няколко файла едновременно.
+                        * Първата избрана снимка ще бъде корица.
+                    </small>
                 </div>
 
-                <button type="submit" class="btn btn-danger">Запази</button>
-                <a asp-action="Index" class="btn btn-outline-secondary ms-2">Назад</a>
+                <div class="mt-4">
+                    <button type="submit" class="btn btn-danger btn-lg px-5">Запази проекта</button>
+                    <a asp-action="Index" class="btn btn-outline-secondary ms-2">Назад към списъка</a>
+                </div>
             </form>
         </div>
     </div>

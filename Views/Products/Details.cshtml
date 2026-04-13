@@ -10,49 +10,54 @@
         ? fallback
         : Url.Content("~/product-images/" + Model.ImageFileName);
 
+    // Добавяме и IsCustomSize в JSON обекта за JS логиката
     var productJson = JsonSerializer.Serialize(new
     {
         id = Model.Id,
         name = Model.Name,
         basePrice = Model.Price,
-        category = Model.Category
+        category = Model.Category,
+        isCustomSize = Model.IsCustomSize // ВАЖНО: Трябва да го има в модела
     });
 }
 
 <div class="container mt-5 product-details-page">
     <div class="row gx-4">
 
+        @* Лява част: Снимки *@
         <div class="col-lg-7">
-            <div class="product-main-image-box shadow-sm mb-3 position-relative">
+            <div class="product-main-image-box shadow-sm mb-3 position-relative bg-white rounded p-2">
                 <img id="mainProductImage" src="@mainImagePath" alt="@Model.Name" class="img-fluid rounded border" />
             </div>
 
-            <div class="d-flex gap-2 overflow-auto py-2">
+            <div class="d-flex gap-2 overflow-auto py-2 thumb-gallery">
                 @foreach (var img in Model.Images.Where(i => string.IsNullOrEmpty(i.ColorHex)))
                 {
-                    <img src="~/product-images/@img.ImagePath" class="img-thumbnail" style="width: 80px; cursor:pointer;" onclick="document.getElementById('mainProductImage').src = this.src" />
+                    <img src="~/product-images/@img.ImagePath" class="img-thumbnail" style="width: 80px; height: 80px; object-fit: cover; cursor:pointer;" onclick="document.getElementById('mainProductImage').src = this.src" />
                 }
             </div>
         </div>
 
+        @* Дясна част: Опции и Поръчка *@
         <div class="col-lg-5">
             <div class="p-4 border rounded bg-white shadow-sm">
-                <h2 class="text-danger fw-bold mb-2">@Model.Name</h2>
+                <h2 class="text-dark fw-bold mb-2">@Model.Name</h2>
                 <p class="text-secondary small">@Model.Description</p>
                 <hr />
 
+                @* 1. Избор на цвят *@
                 <div class="mb-4">
-                    <label class="form-label small fw-bold d-block mb-2">Цвят на профила:</label>
+                    <label class="form-label small fw-bold d-block mb-2 text-uppercase text-muted">Цвят на профила:</label>
                     <div class="d-flex flex-wrap gap-2">
                         @foreach (var color in Model.Colors)
                         {
                             var colorImg = Model.Images.FirstOrDefault(i => i.ColorHex == color.ColorHex)?.ImagePath;
                             var finalImgPath = colorImg != null ? Url.Content("~/product-images/" + colorImg) : mainImagePath;
 
-                            <div class="color-item text-center">
+                            <div class="color-item">
                                 <button type="button"
                                         class="color-circle shadow-sm"
-                                        style="background-color: @color.ColorHex; width: 40px; height: 40px; border-radius: 50%; border: 3px solid #fff; outline: 1px solid #ddd;"
+                                        style="background-color: @color.ColorHex;"
                                         data-image="@finalImgPath"
                                         data-name="@color.ColorName"
                                         onclick="updateProductColor(this)">
@@ -60,43 +65,60 @@
                             </div>
                         }
                     </div>
-                    <small id="selectedColorLabel" class="d-block mt-2 text-muted" style="font-size: 11px;">Изберете цвят на профила</small>
+                    <small id="selectedColorLabel" class="d-block mt-2 text-danger fw-bold" style="font-size: 12px;"></small>
                 </div>
 
-                <div class="row g-3 mb-4">
-                    <div class="col-6">
-                        <label class="form-label small fw-bold">Височина (мм)</label>
-                        <input id="heightMm" type="number" class="form-control form-control-lg" placeholder="1200" oninput="calculateTotal()" />
-                    </div>
-                    <div class="col-6">
-                        <label class="form-label small fw-bold">Ширина (мм)</label>
-                        <input id="widthMm" type="number" class="form-control form-control-lg" placeholder="800" oninput="calculateTotal()" />
-                    </div>
-                </div>
-
-                <div class="mb-4">
-                    <label class="form-label small fw-bold d-block mb-3">Опции за стъклопакет:</label>
-                    @foreach (var variant in Model.Variants)
-                    {
-                        <div class="variant-option border rounded p-3 mb-2 d-flex justify-content-between align-items-center" style="cursor: pointer;" onclick="selectVariant(this, @variant.AdditionalPrice, '@variant.Name')">
-                            <div>
-                                <input type="radio" name="productVariant" class="form-check-input me-2" />
-                                <span>@variant.Name</span>
-                            </div>
-                            <span class="text-danger fw-bold">+@variant.AdditionalPrice лв.</span>
+                @* 2. Калкулатор за размери - Показва се САМО ако продуктът е Custom *@
+                @if (Model.IsCustomSize)
+                {
+                    <div class="row g-3 mb-4 bg-light p-3 rounded border">
+                        <div class="col-12 mb-1"><span class="badge bg-danger">Продукт по Ваши размери</span></div>
+                        <div class="col-6">
+                            <label class="form-label small fw-bold">Височина (мм)</label>
+                            <input id="heightMm" type="number" class="form-control form-control-lg border-danger" placeholder="напр. 1200" oninput="calculateTotal()" />
                         </div>
-                    }
-                </div>
+                        <div class="col-6">
+                            <label class="form-label small fw-bold">Ширина (мм)</label>
+                            <input id="widthMm" type="number" class="form-control form-control-lg border-danger" placeholder="напр. 800" oninput="calculateTotal()" />
+                        </div>
+                    </div>
+                }
 
-                <div class="price-box bg-light p-3 rounded mb-4">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <span class="text-muted">Обща сума:</span>
-                        <h3 id="displayPrice" class="fw-bold text-danger mb-0">-- лв.</h3>
+                @* 3. Варианти (Стъклопакети и др.) *@
+                @if (Model.Variants != null && Model.Variants.Any())
+                {
+                    <div class="mb-4">
+                        <label class="form-label small fw-bold d-block mb-2 text-uppercase text-muted">Опции:</label>
+                        @foreach (var variant in Model.Variants)
+                        {
+                            <div class="variant-option border rounded p-2 mb-2 d-flex justify-content-between align-items-center bg-white shadow-xs" style="cursor: pointer;" onclick="selectVariant(this, @variant.AdditionalPrice, '@variant.Name')">
+                                <div class="d-flex align-items-center">
+                                    <input type="radio" name="productVariant" class="form-check-input me-3" style="cursor: pointer;" />
+                                    <span class="small fw-bold">@variant.Name</span>
+                                </div>
+                                <span class="text-danger small">+@variant.AdditionalPrice.ToString("0.00") лв.</span>
+                            </div>
+                        }
+                    </div>
+                }
+
+                @* 4. Количество и Цена *@
+                <div class="price-box bg-dark text-white p-3 rounded mb-4 d-flex justify-content-between align-items-center shadow">
+                    <div>
+                        <span class="small opacity-75 d-block">Обща сума:</span>
+                        <h3 id="displayPrice" class="fw-bold mb-0">@Model.Price.ToString("0.00") лв.</h3>
+                    </div>
+
+                    @* КОНТРОЛА ЗА БРОЙКИ *@
+                    <div class="quantity-control d-flex align-items-center bg-white rounded-pill p-1">
+                        <button class="btn btn-sm btn-light rounded-circle" onclick="changeQty(-1)"><i class="fas fa-minus text-dark"></i></button>
+                        <input type="number" id="orderQty" class="form-control form-control-sm text-center border-0 fw-bold" value="1" min="1" style="width: 45px; pointer-events: none;">
+                        <button class="btn btn-sm btn-light rounded-circle" onclick="changeQty(1)"><i class="fas fa-plus text-dark"></i></button>
                     </div>
                 </div>
 
-                <button id="addToCartBtn" class="btn btn-danger btn-lg w-100 py-3 fw-bold shadow">
-                    ДОБАВИ В КОЛИЧКАТА
+                <button id="addToCartBtn" class="btn btn-danger btn-lg w-100 py-3 fw-bold shadow rounded-pill">
+                    <i class="fas fa-cart-plus me-2"></i> ДОБАВИ В КОЛИЧКАТА
                 </button>
             </div>
         </div>
@@ -105,18 +127,38 @@
 </div>
 
 <style>
-    .color-circle.active {
-        outline: 2px solid #dc3545 !important;
-        transform: scale(1.1);
+    .color-circle {
+        width: 35px;
+        height: 35px;
+        border-radius: 50%;
+        border: 3px solid #fff;
+        outline: 1px solid #ddd;
+        transition: all 0.2s;
     }
 
-    .variant-option.active {
-        border-color: #dc3545 !important;
-        background-color: #fff5f5;
+        .color-circle.active {
+            outline: 2px solid #dc3545 !important;
+            transform: scale(1.15);
+        }
+
+    .variant-option {
+        transition: all 0.2s;
+        border: 1px solid #eee;
     }
 
-    .variant-option:hover {
-        background-color: #f8f9fa;
+        .variant-option.active {
+            border-color: #dc3545 !important;
+            background-color: #fff5f5 !important;
+            box-shadow: 0 2px 5px rgba(220,53,69,0.1);
+        }
+
+    .quantity-control .btn {
+        width: 28px;
+        height: 28px;
+        padding: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
     }
 </style>
 
@@ -127,56 +169,97 @@
         let selectedVariantName = "";
         let selectedColorName = "";
 
+        // Промяна на количеството
+        function changeQty(val) {
+            const qtyInput = document.getElementById('orderQty');
+            let current = parseInt(qtyInput.value);
+            current += val;
+            if (current < 1) current = 1;
+            qtyInput.value = current;
+            calculateTotal();
+        }
+
         function updateProductColor(btn) {
-            // Махаме активния клас от всички кръгчета
             document.querySelectorAll('.color-circle').forEach(c => c.classList.remove('active'));
-            // Слагаме го на избраното
             btn.classList.add('active');
-
-            // Сменяме главната снимка
-            const newImg = btn.getAttribute('data-image');
-            document.getElementById('mainProductImage').src = newImg;
-
-            // Обновяваме етикета с името на цвета
-            const colorName = btn.getAttribute('data-name');
-            document.getElementById('selectedColorLabel').innerText = "Избран цвят: " + colorName;
-            selectedColorName = colorName;
+            document.getElementById('mainProductImage').src = btn.getAttribute('data-image');
+            selectedColorName = btn.getAttribute('data-name');
+            document.getElementById('selectedColorLabel').innerText = "Цвят: " + selectedColorName;
         }
 
         function selectVariant(element, price, name) {
             document.querySelectorAll('.variant-option').forEach(v => v.classList.remove('active'));
             element.classList.add('active');
             element.querySelector('input').checked = true;
-
             selectedVariantPrice = price;
             selectedVariantName = name;
             calculateTotal();
         }
 
         function calculateTotal() {
-            const h = parseFloat(document.getElementById('heightMm').value);
-            const w = parseFloat(document.getElementById('widthMm').value);
-            const priceLabel = document.getElementById('displayPrice');
+            const qty = parseInt(document.getElementById('orderQty').value);
+            let finalUnitPrice = product.basePrice;
 
-            if (h > 0 && w > 0) {
-                const areaM2 = (h / 1000) * (w / 1000);
-                const total = (areaM2 * product.basePrice) + selectedVariantPrice;
-                priceLabel.innerText = total.toFixed(2) + " лв.";
+            // Ако е по размери (CustomSize)
+            if (product.isCustomSize) {
+                const hInput = document.getElementById('heightMm');
+                const wInput = document.getElementById('widthMm');
+                const h = parseFloat(hInput.value) || 0;
+                const w = parseFloat(wInput.value) || 0;
+
+                if (h > 0 && w > 0) {
+                    const areaM2 = (h / 1000) * (w / 1000);
+                    finalUnitPrice = (areaM2 * product.basePrice) + selectedVariantPrice;
+                } else {
+                    document.getElementById('displayPrice').innerText = "-- лв.";
+                    return;
+                }
             } else {
-                priceLabel.innerText = "-- лв.";
+                // Ако е готов продукт
+                finalUnitPrice = product.basePrice + selectedVariantPrice;
             }
+
+            const totalPrice = finalUnitPrice * qty;
+            document.getElementById('displayPrice').innerText = totalPrice.toFixed(2) + " лв.";
         }
 
         document.getElementById('addToCartBtn').addEventListener('click', function() {
-            const h = document.getElementById('heightMm').value;
-            const w = document.getElementById('widthMm').value;
+            const qty = document.getElementById('orderQty').value;
 
-            if (!h || !w || !selectedVariantName) {
-                alert("Моля, въведете размери и изберете опция!");
+            // Проверка за размери само ако е Custom
+            if (product.isCustomSize) {
+                const h = document.getElementById('heightMm').value;
+                const w = document.getElementById('widthMm').value;
+                if (!h || !w) {
+                    alert("Моля, въведете размери (височина и ширина)!");
+                    return;
+                }
+            }
+
+            if (!selectedColorName) {
+                alert("Моля, изберете цвят!");
                 return;
             }
 
-            alert("Продуктът е добавен в количката!");
+            // Тук добавяш към твоята localStorage количка
+            const cartItem = {
+                id: product.id,
+                name: product.name,
+                price: parseFloat(document.getElementById('displayPrice').innerText),
+                qty: parseInt(qty),
+                color: selectedColorName,
+                variant: selectedVariantName,
+                h: product.isCustomSize ? document.getElementById('heightMm').value : null,
+                w: product.isCustomSize ? document.getElementById('widthMm').value : null
+            };
+
+            // Примерно добавяне (ако ползваш масив tk_cart)
+            let cart = JSON.parse(localStorage.getItem("tk_cart") || "[]");
+            cart.push(cartItem);
+            localStorage.setItem("tk_cart", JSON.stringify(cart));
+
+            window.dispatchEvent(new Event('storage')); // Да обнови иконката в хедъра
+            alert("Успешно добавихте " + qty + " бр. в количката!");
         });
     </script>
 }

@@ -2,36 +2,219 @@
 
 @{
     ViewData["Title"] = Model.Title;
-    Layout = "~/Views/Shared/_Layout.cshtml";
-
-    var imagePath = string.IsNullOrEmpty(Model.ImageFileName)
-        ? Url.Content("~/images/default.jpg")
-        : Url.Content("~/gallery-images/" + Model.ImageFileName);
 }
 
-<div class="container mt-5">
-    <div class="row gx-4 gy-4">
-        <div class="col-lg-8">
-            <div class="product-main-image-box">
-                <img src="@imagePath"
-                     alt="@Model.Title"
-                     class="product-main-image" />
+<style>
+    .gallery-layout {
+        display: flex;
+        gap: 30px;
+        margin-top: 40px;
+        margin-bottom: 60px;
+    }
+
+    /* ОСНОВЕН КОНТЕЙНЕР */
+    .photo-grid-wrapper {
+        flex: 2;
+        position: relative;
+        overflow: hidden;
+        border-radius: 20px;
+        background: #f8f9fa;
+        padding: 20px;
+    }
+
+    /* ПЛЪЗГАЧЪТ */
+    .photo-slider {
+        display: flex;
+        transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1); /* По-плавно движение */
+        width: 100%;
+    }
+
+    /* РЕШЕТКАТА (2 колони х 3 реда) */
+    .photo-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        grid-template-rows: repeat(3, 220px);
+        gap: 15px;
+        min-width: 100%;
+    }
+
+    .photo-card {
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        cursor: pointer;
+        height: 100%;
+        transition: transform 0.3s ease;
+    }
+
+        .photo-card:hover {
+            transform: scale(1.02);
+        }
+
+        .photo-card img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+
+    /* ИНФО ПАНЕЛ */
+    .info-panel {
+        flex: 1;
+        background: white;
+        padding: 30px;
+        border-radius: 25px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+        height: fit-content;
+        position: sticky;
+        top: 20px;
+        border-top: 6px solid #A31E23;
+        display: flex;
+        flex-direction: column;
+    }
+
+    /* БУТОНИ / СТРЕЛКИ - ПЕРФЕКТНО ЦЕНТРИРАНИ */
+    .nav-btn {
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+        background: rgba(255, 255, 255, 0.95);
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        border: none;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        color: #A31E23;
+        z-index: 10;
+        transition: all 0.3s ease;
+        /* ЦЕНТРИРАНЕ НА ИКОНАТА */
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0;
+        line-height: 0;
+    }
+
+        .nav-btn i {
+            font-size: 20px;
+            margin: 0;
+        }
+
+        .nav-btn:hover {
+            background: #A31E23;
+            color: white;
+            transform: translateY(-50%) scale(1.1);
+        }
+
+    .prev-btn {
+        left: 15px;
+    }
+
+    .next-btn {
+        right: 15px;
+    }
+
+    /* МОДАЛ */
+    #imageModal {
+        display: none;
+        position: fixed;
+        z-index: 9999;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,0.9);
+        align-items: center;
+        justify-content: center;
+    }
+
+    #modalImg {
+        max-width: 90%;
+        max-height: 90vh;
+        border-radius: 10px;
+        box-shadow: 0 0 30px rgba(0,0,0,0.5);
+    }
+</style>
+
+<div class="container-fluid px-5">
+    <div class="gallery-layout">
+
+        <div class="photo-grid-wrapper">
+            @if (Model.Images != null && Model.Images.Count > 6)
+            {
+                <button class="nav-btn prev-btn" onclick="moveSlider(-1)"><i class="fas fa-chevron-left"></i></button>
+                <button class="nav-btn next-btn" onclick="moveSlider(1)"><i class="fas fa-chevron-right"></i></button>
+            }
+
+            <div class="photo-slider" id="slider">
+                @for (int i = 0; i < Math.Ceiling((Model.Images?.Count ?? 0) / 6.0); i++)
+                {
+                    <div class="photo-grid">
+                        @foreach (var img in Model.Images.Skip(i * 6).Take(6))
+                        {
+                            <div class="photo-card" onclick="openFullImage('/gallery-images/@img.FileName')">
+                                <img src="/gallery-images/@img.FileName" alt="Проектна снимка">
+                            </div>
+                        }
+                    </div>
+                }
             </div>
         </div>
 
-        <div class="col-lg-4">
-            <div class="product-info-card">
-                <h2 class="text-danger fw-bold mb-2">@Model.Title</h2>
-
-                @if (!string.IsNullOrWhiteSpace(Model.Description))
-                {
-                    <p class="text-muted">@Model.Description</p>
-                }
-
-                <a asp-action="Index" class="btn btn-outline-secondary mt-3">
-                    ← Обратно към галерията
-                </a>
+        <div class="info-panel">
+            <h2 class="text-danger fw-bold">@Model.Title</h2>
+            <hr>
+            <div class="description-content mb-4">
+                <p style="white-space: pre-wrap; color: #444; font-size: 1.05rem;">@Model.Description</p>
             </div>
+            <a asp-action="Index" class="btn btn-outline-dark w-100 rounded-pill mt-auto">
+                <i class="fas fa-arrow-left me-2"></i> Назад към галерията
+            </a>
         </div>
     </div>
 </div>
+
+<div id="imageModal" onclick="this.style.display='none'">
+    <img id="modalImg" src="">
+</div>
+
+@section Scripts {
+    <script>
+        let currentIndex = 0;
+        const slider = document.getElementById('slider');
+        const totalPages = @Math.Ceiling((Model.Images?.Count ?? 0) / 6.0);
+
+        const prevBtn = document.querySelector('.prev-btn');
+        const nextBtn = document.querySelector('.next-btn');
+
+        function updateButtons() {
+            if (!prevBtn || !nextBtn) return;
+
+            // Скриване на лява стрелка на първа страница
+            prevBtn.style.display = (currentIndex === 0) ? 'none' : 'flex';
+
+            // Скриване на дясна стрелка на последна страница
+            nextBtn.style.display = (currentIndex >= totalPages - 1) ? 'none' : 'flex';
+        }
+
+        function moveSlider(direction) {
+            currentIndex += direction;
+
+            if (currentIndex < 0) currentIndex = 0;
+            if (currentIndex >= totalPages) currentIndex = totalPages - 1;
+
+            slider.style.transform = `translateX(-${currentIndex * 100}%)`;
+            updateButtons();
+        }
+
+        document.addEventListener("DOMContentLoaded", function() {
+            updateButtons();
+        });
+
+        function openFullImage(url) {
+            const modal = document.getElementById('imageModal');
+            document.getElementById('modalImg').src = url;
+            modal.style.display = 'flex';
+        }
+    </script>
+}

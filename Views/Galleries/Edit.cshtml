@@ -1,56 +1,107 @@
 ﻿@model TKGroopBG.Models.Gallery
 
 @{
-    ViewData["Title"] = "Редакция";
+    ViewData["Title"] = "Редакция на проект";
     Layout = "~/Views/Shared/_Layout.cshtml";
-
-    var imagePath = string.IsNullOrEmpty(Model.ImageFileName)
-        ? Url.Content("~/images/default.jpg")
-        : Url.Content("~/gallery-images/" + Model.ImageFileName);
 }
 
-<div class="container mt-5">
-    <h2 class="text-danger fw-bold mb-3">Редакция на снимка</h2>
+<div class="container mt-5 mb-5">
+    <h2 class="text-danger fw-bold mb-3">Редактиране на проект: @Model.Title</h2>
     <hr />
 
-    <div class="row">
-        <div class="col-md-6">
-            <form asp-action="Edit" enctype="multipart/form-data">
+    <form asp-action="Edit" enctype="multipart/form-data" method="post">
+        <div class="row">
+            <div class="col-md-7">
                 <input type="hidden" asp-for="Id" />
+                <input type="hidden" asp-for="ImageFileName" />
+
                 <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
 
                 <div class="mb-3">
-                    <label asp-for="Title" class="form-label">Заглавие</label>
+                    <label asp-for="Title" class="form-label fw-bold">Заглавие</label>
                     <input asp-for="Title" class="form-control" />
                     <span asp-validation-for="Title" class="text-danger"></span>
                 </div>
 
                 <div class="mb-3">
-                    <label asp-for="Description" class="form-label">Описание</label>
-                    <textarea asp-for="Description" class="form-control" rows="3"></textarea>
+                    <label asp-for="Description" class="form-label fw-bold">Описание и материали</label>
+                    <textarea asp-for="Description" class="form-control" rows="8"></textarea>
                     <span asp-validation-for="Description" class="text-danger"></span>
                 </div>
 
+                <div class="mb-4 p-3 border rounded bg-light">
+                    <label class="form-label fw-bold">Добави още снимки към проекта</label>
+                    <input type="file" name="imageFiles" class="form-control" accept="image/*" multiple />
+                    <small class="text-muted">Можете да изберете няколко нови файла.</small>
+                </div>
+
                 <div class="mb-3">
-                    <label class="form-label">Текуща снимка</label><br />
-                    <img src="@imagePath" alt="@Model.Title" style="max-width: 100%; border-radius: 10px;" />
+                    <button type="submit" class="btn btn-danger btn-lg px-5">Запази промените</button>
+                    <a asp-action="Index" class="btn btn-outline-secondary ms-2">Назад</a>
                 </div>
+            </div>
 
-                <div class="mb-4">
-                    <label class="form-label">Нова снимка (по желание)</label>
-                    <input type="file" name="imageFile" class="form-control" accept="image/*" />
+            <div class="col-md-5">
+                <h4 class="fw-bold mb-3">Текущи снимки в албума</h4>
+                <div class="row g-2 border p-3 rounded bg-white" id="current-images-container" style="max-height: 550px; overflow-y: auto;">
+                    @if (Model.Images != null && Model.Images.Any())
+                    {
+                        @foreach (var img in Model.Images)
+                        {
+                            <div class="col-4 position-relative mb-2" id="img-container-@img.Id">
+                                <img src="/gallery-images/@img.FileName" class="img-thumbnail" style="height: 100px; width: 100%; object-fit: cover;">
+
+                                <button type="button"
+                                        class="btn btn-danger btn-sm position-absolute top-0 end-0 m-1 rounded-circle shadow"
+                                        style="width: 26px; height: 26px; padding: 0; display: flex; align-items: center; justify-content: center; z-index: 5;"
+                                        onclick="deleteImage(@img.Id)">
+                                    <i class="fas fa-times" style="font-size: 12px;"></i>
+                                </button>
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <div class="col-12 text-center py-4">
+                            <p class="text-muted italic mb-0">Няма добавени снимки в този албум.</p>
+                        </div>
+                    }
                 </div>
-
-                <button type="submit" class="btn btn-danger">Запази</button>
-                <a asp-action="Index" class="btn btn-outline-secondary ms-2">Назад</a>
-            </form>
+            </div>
         </div>
-    </div>
+    </form>
 </div>
 
 @section Scripts {
     @{
         await Html.RenderPartialAsync("_ValidationScriptsPartial");
     }
-}
 
+    <script>
+                function deleteImage(imageId) {
+            // Вече не питаме "Сигурни ли сте", а действаме веднага
+            $.ajax({
+                url: '/Galleries/DeleteImage/' + imageId,
+                type: 'POST',
+                success: function (result) {
+                    if (result.success) {
+                        // Снимката изчезва веднага от екрана
+                        $('#img-container-' + imageId).fadeOut(200, function() {
+                            $(this).remove();
+
+                            // Проверка дали албумът е останал празен
+                            if ($('#current-images-container').find('.col-4').length === 0) {
+                                $('#current-images-container').html('<div class="col-12 text-center py-4"><p class="text-muted italic mb-0">Няма добавени снимки.</p></div>');
+                            }
+                        });
+                    } else {
+                        console.error("Грешка при изтриване: " + result.message);
+                    }
+                },
+                error: function () {
+                    console.error("Възникна грешка при връзката със сървъра.");
+                }
+            });
+        }
+    </script>
+}
