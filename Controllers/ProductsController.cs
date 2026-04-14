@@ -110,14 +110,12 @@ namespace TKGroopBG.Controllers
                 return View(product);
             }
 
-            // 1. Основна снимка
             var fileName = await SaveImageAsync(imageFile);
             if (fileName != null) product.ImageFileName = fileName;
 
             _context.Add(product);
             await _context.SaveChangesAsync();
 
-            // 2. Запис на общата Галерия
             if (galleryFiles != null && galleryFiles.Count > 0)
             {
                 foreach (var file in galleryFiles)
@@ -125,30 +123,20 @@ namespace TKGroopBG.Controllers
                     var path = await SaveImageAsync(file);
                     if (path != null)
                     {
-                        _context.ProductImages.Add(new ProductImage
-                        {
-                            ProductId = product.Id,
-                            ImagePath = path
-                        });
+                        _context.ProductImages.Add(new ProductImage { ProductId = product.Id, ImagePath = path });
                     }
                 }
             }
 
-            // 3. Запис на Вариантите (стъклопакети)
             if (!string.IsNullOrEmpty(variantsJson))
             {
                 var variants = JsonConvert.DeserializeObject<List<ProductVariant>>(variantsJson);
                 if (variants != null)
                 {
-                    foreach (var v in variants)
-                    {
-                        v.ProductId = product.Id;
-                        _context.ProductVariants.Add(v);
-                    }
+                    foreach (var v in variants) { v.ProductId = product.Id; _context.ProductVariants.Add(v); }
                 }
             }
 
-            // 4. Запис на Цветовете и техните снимки
             if (!string.IsNullOrEmpty(colorsJson))
             {
                 var colors = JsonConvert.DeserializeObject<List<ProductColor>>(colorsJson);
@@ -160,19 +148,12 @@ namespace TKGroopBG.Controllers
                         colorObj.ProductId = product.Id;
                         _context.ProductColors.Add(colorObj);
 
-                        // Проверяваме дали има качена снимка за този индекс на цвят
                         if (colorFiles != null && i < colorFiles.Count)
                         {
                             var colorImgPath = await SaveImageAsync(colorFiles[i]);
                             if (colorImgPath != null)
                             {
-                                // Важно: ColorHex ни трябва за филтрация в Details.cshtml
-                                _context.ProductImages.Add(new ProductImage
-                                {
-                                    ProductId = product.Id,
-                                    ImagePath = colorImgPath,
-                                    ColorHex = colorObj.ColorHex
-                                });
+                                _context.ProductImages.Add(new ProductImage { ProductId = product.Id, ImagePath = colorImgPath, ColorHex = colorObj.ColorHex });
                             }
                         }
                     }
@@ -181,6 +162,57 @@ namespace TKGroopBG.Controllers
 
             await _context.SaveChangesAsync();
             return RedirectToAction(nameof(Category), new { id = product.Category });
+        }
+
+        // ================== EDIT (Admin) - ТОВА БЕШЕ ПРОБЛЕМЪТ ==================
+
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> Edit(int? id)
+        {
+            if (id == null) return NotFound();
+
+            var product = await _context.Products.FindAsync(id);
+            if (product == null) return NotFound();
+
+            ViewBag.Categories = Categories;
+            return View(product);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> Edit(int id, Products product, IFormFile? imageFile)
+        {
+            if (id != product.Id) return NotFound();
+
+            if (ModelState.IsValid)
+            {
+                try
+                {
+                    if (imageFile != null && imageFile.Length > 0)
+                    {
+                        var fileName = await SaveImageAsync(imageFile);
+                        if (fileName != null) product.ImageFileName = fileName;
+                    }
+                    else
+                    {
+                        // Не променяме името на файла, ако не е качена нова снимка
+                        _context.Entry(product).Property(x => x.ImageFileName).IsModified = false;
+                    }
+
+                    _context.Update(product);
+                    await _context.SaveChangesAsync();
+                }
+                catch (DbUpdateConcurrencyException)
+                {
+                    if (!_context.Products.Any(e => e.Id == product.Id)) return NotFound();
+                    else throw;
+                }
+                return RedirectToAction(nameof(Category), new { id = product.Category });
+            }
+
+            ViewBag.Categories = Categories;
+            return View(product);
         }
 
         // ================== DELETE (Admin) ==================
