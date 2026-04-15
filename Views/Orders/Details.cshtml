@@ -68,15 +68,15 @@
                                             </div>
                                         </td>
                                         <td class="text-center">@item.Quantity</td>
-                                        <td class="text-end">@item.Price.ToString("F2") лв.</td>
-                                        <td class="text-end fw-bold">@((item.Price * item.Quantity).ToString("F2")) лв.</td>
+                                        <td class="text-end">@item.Price.ToString("F2") €</td>
+                                        <td class="text-end fw-bold">@((item.Price * item.Quantity).ToString("F2")) €</td>
                                     </tr>
                                 }
                             </tbody>
                             <tfoot class="table-light">
                                 <tr>
                                     <td colspan="3" class="text-end fw-bold">Крайна сума:</td>
-                                    <td class="text-end text-danger fw-bold fs-5">@Model.TotalPrice.ToString("F2") лв.</td>
+                                    <td class="text-end text-danger fw-bold fs-5">@Model.TotalPrice.ToString("F2") €</td>
                                 </tr>
                             </tfoot>
                         </table>

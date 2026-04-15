@@ -20,7 +20,41 @@
     });
 }
 
-@* Добавяме това тук, за да работи сигурността на заявката *@
+@* ДОБАВЕНИ СТИЛОВЕ ЗА ЦВЕТОВЕТЕ *@
+<style>
+    .color-circle {
+        width: 35px;
+        height: 35px;
+        border-radius: 50%;
+        border: 2px solid #eee;
+        display: inline-block;
+        padding: 0;
+        transition: all 0.2s ease;
+        position: relative;
+    }
+
+        .color-circle:hover {
+            transform: scale(1.1);
+            border-color: #dc3545;
+        }
+
+        .color-circle.active {
+            border-color: #333;
+            box-shadow: 0 0 0 2px #fff, 0 0 0 4px #dc3545 !important;
+        }
+
+    .variant-option.active {
+        border-color: #dc3545 !important;
+        background-color: #fff5f5 !important;
+    }
+
+    .product-main-image-box img {
+        width: 100%;
+        height: 500px;
+        object-fit: contain;
+    }
+</style>
+
 @Html.AntiForgeryToken()
 
 <div class="container mt-5 product-details-page">
@@ -47,27 +81,30 @@
                 <hr />
 
                 @* 1. Избор на цвят *@
-                <div class="mb-4">
-                    <label class="form-label small fw-bold d-block mb-2 text-uppercase text-muted">Цвят на профила:</label>
-                    <div class="d-flex flex-wrap gap-2">
-                        @foreach (var color in Model.Colors)
-                        {
-                            var colorImg = Model.Images.FirstOrDefault(i => i.ColorHex == color.ColorHex)?.ImagePath;
-                            var finalImgPath = colorImg != null ? Url.Content("~/product-images/" + colorImg) : mainImagePath;
+                @if (Model.Colors != null && Model.Colors.Any())
+                {
+                    <div class="mb-4">
+                        <label class="form-label small fw-bold d-block mb-2 text-uppercase text-muted">Цвят на профила:</label>
+                        <div class="d-flex flex-wrap gap-3">
+                            @foreach (var color in Model.Colors)
+                            {
+                                var colorImg = Model.Images.FirstOrDefault(i => i.ColorHex == color.ColorHex)?.ImagePath;
+                                var finalImgPath = colorImg != null ? Url.Content("~/product-images/" + colorImg) : mainImagePath;
 
-                            <div class="color-item">
-                                <button type="button"
-                                        class="color-circle shadow-sm"
-                                        style="background-color: @color.ColorHex;"
-                                        data-image="@finalImgPath"
-                                        data-name="@color.ColorName"
-                                        onclick="updateProductColor(this)">
-                                </button>
-                            </div>
-                        }
+                                <div class="color-item" title="@color.ColorName">
+                                    <button type="button"
+                                            class="color-circle shadow-sm"
+                                            style="background-color: @color.ColorHex;"
+                                            data-image="@finalImgPath"
+                                            data-name="@color.ColorName"
+                                            onclick="updateProductColor(this)">
+                                    </button>
+                                </div>
+                            }
+                        </div>
+                        <small id="selectedColorLabel" class="d-block mt-2 text-danger fw-bold" style="font-size: 13px;">Цвят: Стандартен</small>
                     </div>
-                    <small id="selectedColorLabel" class="d-block mt-2 text-danger fw-bold" style="font-size: 12px;"></small>
-                </div>
+                }
 
                 @* 2. Калкулатор за размери *@
                 @if (Model.IsCustomSize)
@@ -92,12 +129,12 @@
                         <label class="form-label small fw-bold d-block mb-2 text-uppercase text-muted">Опции:</label>
                         @foreach (var variant in Model.Variants)
                         {
-                            <div class="variant-option border rounded p-2 mb-2 d-flex justify-content-between align-items-center bg-white shadow-xs" style="cursor: pointer;" onclick="selectVariant(this, @variant.AdditionalPrice, '@variant.Name')">
+                            <div class="variant-option border rounded p-3 mb-2 d-flex justify-content-between align-items-center bg-white shadow-sm" style="cursor: pointer;" onclick="selectVariant(this, @variant.AdditionalPrice, '@variant.Name')">
                                 <div class="d-flex align-items-center">
                                     <input type="radio" name="productVariant" class="form-check-input me-3" style="cursor: pointer;" />
                                     <span class="small fw-bold">@variant.Name</span>
                                 </div>
-                                <span class="text-danger small">+@variant.AdditionalPrice.ToString("0.00") лв.</span>
+                                <span class="text-danger fw-bold">+@variant.AdditionalPrice.ToString("0.00") €</span>
                             </div>
                         }
                     </div>
@@ -107,7 +144,7 @@
                 <div class="price-box bg-dark text-white p-3 rounded mb-4 d-flex justify-content-between align-items-center shadow">
                     <div>
                         <span class="small opacity-75 d-block">Обща сума:</span>
-                        <h3 id="displayPrice" class="fw-bold mb-0">@Model.Price.ToString("0.00") лв.</h3>
+                        <h3 id="displayPrice" class="fw-bold mb-0">@Model.Price.ToString("0.00") €</h3>
                     </div>
 
                     <div class="quantity-control d-flex align-items-center bg-white rounded-pill p-1">
@@ -125,48 +162,12 @@
     </div>
 </div>
 
-<style>
-    .color-circle {
-        width: 35px;
-        height: 35px;
-        border-radius: 50%;
-        border: 3px solid #fff;
-        outline: 1px solid #ddd;
-        transition: all 0.2s;
-    }
-
-        .color-circle.active {
-            outline: 2px solid #dc3545 !important;
-            transform: scale(1.15);
-        }
-
-    .variant-option {
-        transition: all 0.2s;
-        border: 1px solid #eee;
-    }
-
-        .variant-option.active {
-            border-color: #dc3545 !important;
-            background-color: #fff5f5 !important;
-            box-shadow: 0 2px 5px rgba(220,53,69,0.1);
-        }
-
-    .quantity-control .btn {
-        width: 28px;
-        height: 28px;
-        padding: 0;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
-</style>
-
 @section Scripts {
     <script>
         const product = @Html.Raw(productJson);
         let selectedVariantPrice = 0;
         let selectedVariantName = "";
-        let selectedColorName = "";
+        let selectedColorName = "Стандартен";
 
         function changeQty(val) {
             const qtyInput = document.getElementById('orderQty');
@@ -205,7 +206,7 @@
                     const areaM2 = (h / 1000) * (w / 1000);
                     finalUnitPrice = (areaM2 * product.basePrice) + selectedVariantPrice;
                 } else {
-                    document.getElementById('displayPrice').innerText = "-- лв.";
+                    document.getElementById('displayPrice').innerText = "-- €";
                     return;
                 }
             } else {
@@ -213,10 +214,9 @@
             }
 
             const totalPrice = finalUnitPrice * qty;
-            document.getElementById('displayPrice').innerText = totalPrice.toFixed(2) + " лв.";
+            document.getElementById('displayPrice').innerText = totalPrice.toFixed(2) + " €";
         }
 
-        // КОРИГИРАНАТА ФУНКЦИЯ ЗА ДОБАВЯНЕ
         document.getElementById('addToCartBtn').addEventListener('click', async function() {
             const qty = document.getElementById('orderQty').value;
 
@@ -225,12 +225,9 @@
                 const w = document.getElementById('widthMm').value;
                 if (!h || !w) { alert("Моля, въведете размери!"); return; }
             }
-            if (!selectedColorName) { alert("Моля, изберете цвят!"); return; }
 
-            // Генерираме детайлите за продукта
             const details = `Цвят: ${selectedColorName}${product.isCustomSize ? `, Размер: ${document.getElementById('widthMm').value}x${document.getElementById('heightMm').value}` : ""}${selectedVariantName ? `, Опция: ${selectedVariantName}` : ""}`;
 
-            // Подготвяме данните за сървъра
             const formData = new URLSearchParams();
             formData.append('productId', product.id);
             formData.append('quantity', qty);
@@ -249,12 +246,6 @@
                 });
 
                 if (response.ok) {
-                    // Обновяваме локалната количка само за иконката
-                    let cart = JSON.parse(localStorage.getItem("tk_cart") || "[]");
-                    cart.push({ id: product.id, qty: parseInt(qty) });
-                    localStorage.setItem("tk_cart", JSON.stringify(cart));
-                    window.dispatchEvent(new Event('storage'));
-
                     alert("Успешно добавено в количката!");
                     window.location.href = '/Cart';
                 } else {

@@ -34,7 +34,6 @@ namespace TKGroopBG.Controllers
             _env = env;
         }
 
-        // ================== ПОМОЩЕН МЕТОД ЗА ЗАПИС НА ФАЙЛ ==================
         private async Task<string?> SaveImageAsync(IFormFile? imageFile)
         {
             if (imageFile == null || imageFile.Length == 0)
@@ -55,7 +54,6 @@ namespace TKGroopBG.Controllers
         }
 
         // ================== ПУБЛИЧНИ СТРАНИЦИ ==================
-
         [AllowAnonymous]
         public IActionResult Index() => View("Categories", Categories);
 
@@ -63,12 +61,7 @@ namespace TKGroopBG.Controllers
         public async Task<IActionResult> Category(string id)
         {
             if (string.IsNullOrWhiteSpace(id)) return RedirectToAction(nameof(Index));
-
-            var items = await _context.Products
-                .AsNoTracking()
-                .Where(p => p.Category == id)
-                .ToListAsync();
-
+            var items = await _context.Products.AsNoTracking().Where(p => p.Category == id).ToListAsync();
             ViewBag.Category = id;
             return View("List", items);
         }
@@ -77,21 +70,13 @@ namespace TKGroopBG.Controllers
         public async Task<IActionResult> Details(int? id)
         {
             if (id == null) return NotFound();
-
             var product = await _context.Products
-                .Include(p => p.Images)
-                .Include(p => p.Variants)
-                .Include(p => p.Colors)
-                .AsNoTracking()
-                .FirstOrDefaultAsync(m => m.Id == id);
-
-            if (product == null) return NotFound();
-
-            return View(product);
+                .Include(p => p.Images).Include(p => p.Variants).Include(p => p.Colors)
+                .AsNoTracking().FirstOrDefaultAsync(m => m.Id == id);
+            return product == null ? NotFound() : View(product);
         }
 
-        // ================== CREATE (Admin) ==================
-
+        // ================== CREATE ==================
         [Authorize(Roles = "Admin")]
         public IActionResult Create(string? category)
         {
@@ -102,98 +87,132 @@ namespace TKGroopBG.Controllers
         [HttpPost]
         [ValidateAntiForgeryToken]
         [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> Create(Products product, IFormFile? imageFile, IFormFileCollection galleryFiles, IFormFileCollection colorFiles, string variantsJson, string colorsJson)
+        public async Task<IActionResult> Create(Products product, IFormFile? imageFile, IFormFileCollection colorFiles, string variantsJson, string colorsJson)
         {
-            if (!ModelState.IsValid)
-            {
-                ViewBag.Categories = Categories;
-                return View(product);
-            }
+            if (!ModelState.IsValid) { ViewBag.Categories = Categories; return View(product); }
 
-            // 1. Основна снимка
-            var fileName = await SaveImageAsync(imageFile);
-            if (fileName != null) product.ImageFileName = fileName;
-
+            product.ImageFileName = await SaveImageAsync(imageFile);
             _context.Add(product);
             await _context.SaveChangesAsync();
 
-            // 2. Запис на общата Галерия
-            if (galleryFiles != null && galleryFiles.Count > 0)
-            {
-                foreach (var file in galleryFiles)
-                {
-                    var path = await SaveImageAsync(file);
-                    if (path != null)
-                    {
-                        _context.ProductImages.Add(new ProductImage
-                        {
-                            ProductId = product.Id,
-                            ImagePath = path
-                        });
-                    }
-                }
-            }
-
-            // 3. Запис на Вариантите (стъклопакети)
-            if (!string.IsNullOrEmpty(variantsJson))
-            {
-                var variants = JsonConvert.DeserializeObject<List<ProductVariant>>(variantsJson);
-                if (variants != null)
-                {
-                    foreach (var v in variants)
-                    {
-                        v.ProductId = product.Id;
-                        _context.ProductVariants.Add(v);
-                    }
-                }
-            }
-
-            // 4. Запис на Цветовете и техните снимки
-            if (!string.IsNullOrEmpty(colorsJson))
-            {
-                var colors = JsonConvert.DeserializeObject<List<ProductColor>>(colorsJson);
-                if (colors != null)
-                {
-                    for (int i = 0; i < colors.Count; i++)
-                    {
-                        var colorObj = colors[i];
-                        colorObj.ProductId = product.Id;
-                        _context.ProductColors.Add(colorObj);
-
-                        // Проверяваме дали има качена снимка за този индекс на цвят
-                        if (colorFiles != null && i < colorFiles.Count)
-                        {
-                            var colorImgPath = await SaveImageAsync(colorFiles[i]);
-                            if (colorImgPath != null)
-                            {
-                                // Важно: ColorHex ни трябва за филтрация в Details.cshtml
-                                _context.ProductImages.Add(new ProductImage
-                                {
-                                    ProductId = product.Id,
-                                    ImagePath = colorImgPath,
-                                    ColorHex = colorObj.ColorHex
-                                });
-                            }
-                        }
-                    }
-                }
-            }
+            // Логика за варианти и цветове (аналогична на Edit, но опростена за нов продукт)
+            await ProcessVariantsAndColors(product.Id, variantsJson, colorsJson, colorFiles);
 
             await _context.SaveChangesAsync();
             return RedirectToAction(nameof(Category), new { id = product.Category });
         }
 
-        // ================== DELETE (Admin) ==================
+        // ================== EDIT ==================
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> Edit(int? id)
+        {
+            if (id == null) return NotFound();
+            var product = await _context.Products
+                .Include(p => p.Variants).Include(p => p.Colors).Include(p => p.Images)
+                .FirstOrDefaultAsync(m => m.Id == id);
+            if (product == null) return NotFound();
+            ViewBag.Categories = Categories;
+            return View(product);
+        }
 
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> Edit(int id, Products product, IFormFile? imageFile, IFormFileCollection colorFiles, string variantsJson, string colorsJson)
+        {
+            if (id != product.Id) return NotFound();
+
+            if (ModelState.IsValid)
+            {
+                try
+                {
+                    // 1. Основна снимка
+                    if (imageFile != null) product.ImageFileName = await SaveImageAsync(imageFile);
+                    else _context.Entry(product).Property(x => x.ImageFileName).IsModified = false;
+
+                    _context.Update(product);
+
+                    // 2. Обработка на Варианти и Цветове
+                    await ProcessVariantsAndColors(id, variantsJson, colorsJson, colorFiles);
+
+                    await _context.SaveChangesAsync();
+                }
+                catch (DbUpdateConcurrencyException)
+                {
+                    if (!_context.Products.Any(e => e.Id == product.Id)) return NotFound();
+                    else throw;
+                }
+                return RedirectToAction(nameof(Category), new { id = product.Category });
+            }
+            ViewBag.Categories = Categories;
+            return View(product);
+        }
+
+        // ПОМОЩЕН МЕТОД ЗА ОБРАБОТКА НА JSON И ФАЙЛОВЕ
+        private async Task ProcessVariantsAndColors(int productId, string variantsJson, string colorsJson, IFormFileCollection colorFiles)
+        {
+            // --- Варианти ---
+            var oldVariants = _context.ProductVariants.Where(v => v.ProductId == productId);
+            _context.ProductVariants.RemoveRange(oldVariants);
+
+            if (!string.IsNullOrEmpty(variantsJson))
+            {
+                var variants = JsonConvert.DeserializeObject<List<ProductVariant>>(variantsJson);
+                if (variants != null)
+                {
+                    foreach (var v in variants) { v.ProductId = productId; v.Id = 0; _context.ProductVariants.Add(v); }
+                }
+            }
+
+            // --- Цветове и Снимки ---
+            // Вземаме съществуващите снимки, за да не ги загубим
+            var existingImages = await _context.ProductImages.Where(i => i.ProductId == productId && i.ColorHex != null).ToListAsync();
+
+            // Махаме старите цветове
+            _context.ProductColors.RemoveRange(_context.ProductColors.Where(c => c.ProductId == productId));
+
+            if (!string.IsNullOrEmpty(colorsJson))
+            {
+                // Използваме dynamic за лесен достъп до FileIndex
+                var colorsData = JsonConvert.DeserializeObject<List<dynamic>>(colorsJson);
+                int fileCounter = 0;
+
+                if (colorsData != null)
+                {
+                    foreach (var cData in colorsData)
+                    {
+                        string cName = cData.ColorName;
+                        string cHex = cData.ColorHex;
+                        int fIndex = (int)cData.FileIndex;
+
+                        _context.ProductColors.Add(new ProductColor { ProductId = productId, ColorName = cName, ColorHex = cHex });
+
+                        // Проверка за нова снимка
+                        if (fIndex != -1 && colorFiles != null && fileCounter < colorFiles.Count)
+                        {
+                            // Изтриваме старата снимка за този цвят (ако има)
+                            var oldImg = existingImages.FirstOrDefault(i => i.ColorHex == cHex);
+                            if (oldImg != null) _context.ProductImages.Remove(oldImg);
+
+                            // Записваме новата
+                            var path = await SaveImageAsync(colorFiles[fileCounter]);
+                            if (path != null)
+                                _context.ProductImages.Add(new ProductImage { ProductId = productId, ImagePath = path, ColorHex = cHex });
+
+                            fileCounter++;
+                        }
+                    }
+                }
+            }
+        }
+
+        // ================== DELETE ==================
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Delete(int? id)
         {
             if (id == null) return NotFound();
-
             var product = await _context.Products.FirstOrDefaultAsync(m => m.Id == id);
-            if (product == null) return NotFound();
-
-            return View(product);
+            return product == null ? NotFound() : View(product);
         }
 
         [HttpPost, ActionName("Delete")]
@@ -202,11 +221,7 @@ namespace TKGroopBG.Controllers
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
             var product = await _context.Products.FindAsync(id);
-            if (product != null)
-            {
-                _context.Products.Remove(product);
-                await _context.SaveChangesAsync();
-            }
+            if (product != null) { _context.Products.Remove(product); await _context.SaveChangesAsync(); }
             return RedirectToAction(nameof(Index));
         }
     }

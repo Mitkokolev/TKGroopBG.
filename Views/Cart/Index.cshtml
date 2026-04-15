@@ -47,11 +47,11 @@
                                                 }
                                             </div>
                                         </td>
-                                        <td>@item.Product?.Price.ToString("F2") лв.</td>
+                                        <td>@item.Product?.Price.ToString("F2") €</td>
                                         <td>
                                             <span class="badge bg-light text-dark border p-2">@item.Quantity бр.</span>
                                         </td>
-                                        <td class="fw-bold text-danger">@((item.Product?.Price * item.Quantity)?.ToString("F2")) лв.</td>
+                                        <td class="fw-bold text-danger">@((item.Product?.Price * item.Quantity)?.ToString("F2")) €</td>
                                         <td class="text-end">
                                             @Html.AntiForgeryToken()
                                             <button onclick="removeFromCart(@item.Id)" class="btn btn-sm btn-link text-danger p-0">
@@ -66,7 +66,7 @@
                     <hr />
                     <div class="text-end py-2">
                         <span class="text-muted me-2">Обща сума за плащане:</span>
-                        <h4 class="d-inline-block text-danger fw-bold">@Model.Sum(x => x.Quantity * (x.Product?.Price ?? 0)).ToString("F2") лв.</h4>
+                        <h4 class="d-inline-block text-danger fw-bold">@Model.Sum(x => x.Quantity * (x.Product?.Price ?? 0)).ToString("F2") €</h4>
                     </div>
                 }
                 else
@@ -89,7 +89,6 @@
                     <span>@Model?.Count()</span>
                 </div>
 
-                @* ВАЖНО: Този линк води към [HttpGet] Order() *@
                 <a href="/Cart/Order" class="btn btn-danger btn-lg w-100 py-3 fw-bold shadow-sm @(Model == null || !Model.Any() ? "disabled" : "")">
                     КЪМ ЗАВЪРШВАНЕ <i class="fas fa-chevron-right ms-2"></i>
                 </a>

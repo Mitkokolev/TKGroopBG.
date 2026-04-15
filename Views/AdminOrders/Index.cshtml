@@ -6,6 +6,29 @@
         <span class="badge-admin">Общо: @(Model?.Count() ?? 0)</span>
     </div>
 
+    @* --- СЕКЦИЯ ЗА ТЪРСЕНЕ --- *@
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <form asp-action="Index" method="get" class="d-flex gap-2">
+                <div class="input-group">
+                    <span class="input-group-text bg-white border-end-0">
+                        <i class="fas fa-search text-muted"></i>
+                    </span>
+                    <input type="text"
+                           name="searchString"
+                           class="form-control border-start-0"
+                           placeholder="Търси по име на клиент или телефон..."
+                           value="@ViewData["CurrentFilter"]" />
+                    <button type="submit" class="btn btn-danger px-4">Търси</button>
+                </div>
+                @if (!string.IsNullOrEmpty(ViewData["CurrentFilter"] as string))
+                {
+                    <a asp-action="Index" class="btn btn-outline-secondary">Изчисти</a>
+                }
+            </form>
+        </div>
+    </div>
+
     <div class="cart-table shadow-sm">
         <table class="table table-hover mb-0">
             <thead class="table-dark">
@@ -18,15 +41,18 @@
                 </tr>
             </thead>
             <tbody>
-                @if (Model != null)
+                @if (Model != null && Model.Any())
                 {
                     @foreach (var order in Model)
                     {
-                        string statusClass = "status-processing";
-                        if (order.Status == "Нова") { statusClass = "status-new"; }
-                        else if (order.Status == "Обработва се") { statusClass = "status-processing"; }
-                        else if (order.Status == "Изпратена") { statusClass = "status-shipped"; }
-                        else if (order.Status == "Завършена") { statusClass = "status-completed"; }
+                        string statusClass = order.Status switch
+                        {
+                            "Нова" => "status-new",
+                            "Обработва се" => "status-processing",
+                            "Изпратена" => "status-shipped",
+                            "Завършена" => "status-completed",
+                            _ => "status-processing"
+                        };
 
                         <tr class="align-middle">
                             <td class="ps-4">
@@ -34,7 +60,7 @@
                                 <small class="text-muted"><i class="fas fa-phone fa-xs"></i> @order.Phone</small>
                             </td>
                             <td>@order.CreatedAt.ToString("dd.MM.yyyy")</td>
-                            <td class="product-price">@order.TotalPrice лв.</td>
+                            <td class="product-price">@order.TotalPrice.ToString("F2") €</td>
                             <td>
                                 <span class="status-pill @statusClass">
                                     <i class="fas fa-circle" style="font-size: 8px;"></i> @order.Status
@@ -53,6 +79,14 @@
                             </td>
                         </tr>
                     }
+                }
+                else
+                {
+                    <tr>
+                        <td colspan="5" class="text-center py-5 text-muted">
+                            Няма намерени поръчки по този критерий.
+                        </td>
+                    </tr>
                 }
             </tbody>
         </table>

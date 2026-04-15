@@ -34,11 +34,11 @@ namespace TKGroopBG.Services
                 sb.Append("<tr>");
                 sb.Append($"<td>{item.ProductName}</td>");
                 sb.Append($"<td>{item.Details}</td>");
-                sb.Append($"<td>{item.Price} лв.</td>");
+                sb.Append($"<td>{item.Price} €</td>");
                 sb.Append("</tr>");
             }
             sb.Append("</table>");
-            sb.Append($"<h3>Обща сума: {order.Items.Sum(x => x.Price)} лв.</h3>");
+            sb.Append($"<h3>Обща сума: {order.Items.Sum(x => x.Price)} €</h3>");
 
             using var client = new SmtpClient(_settings.Host, _settings.Port)
             {

@@ -1,7 +1,6 @@
 ﻿@model IEnumerable<TKGroopBG.Models.Products>
 
 @{
-
     ViewData["Title"] = "Продукти";
     Layout = "~/Views/Shared/_Layout.cshtml";
 
@@ -19,13 +18,16 @@
     <h2 class="text-danger fw-bold mb-2">Нашите продукти</h2>
     <p class="text-muted mb-4">Добре дошли в секцията с продукти.</p>
 
-    @await Html.PartialAsync("_AdminBar")   <!-- ТУК ДА ГО ИМА -->
+    @await Html.PartialAsync("_AdminBar")
 
     <div class="products-grid">
         @foreach (var item in Model)
         {
-            var imageName = $"{(item.Name ?? string.Empty).Replace(" ", "_")}.jpg";
-            var imagePath = Url.Content($"~/images/{imageName}");
+            // Път към снимката от папката за качване
+            var imagePath = string.IsNullOrEmpty(item.ImageFileName)
+            ? Url.Content("~/images/default.jpg")
+            : Url.Content($"~/product-images/{item.ImageFileName}");
+
             var fallback = Url.Content("~/images/default.jpg");
 
             <div class="product-card">
@@ -42,7 +44,7 @@
                         <p>@item.Description</p>
                     }
 
-                    <span class="product-price">@item.Price.ToString("0.00") лв.</span>
+                    <span class="product-price">@item.Price.ToString("0.00") €</span>
 
                     @if (!string.IsNullOrWhiteSpace(item.Category))
                     {
